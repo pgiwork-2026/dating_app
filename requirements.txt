@@ -4,3 +4,4 @@ supabase
 python-dotenv
 PyJWT
 bcrypt
+gunicorn
