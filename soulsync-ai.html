@@ -4160,6 +4160,10 @@
 
     /* Hide app navigation + bell until signed in */
     body:not(.logged-in) #navLinks, body:not(.logged-in) #notifBtn, body:not(.logged-in) .mobile-nav, body:not(.logged-in) #notifPanel { display: none !important; }
+
+    /* Also hide nav + bell during onboarding / photo upload / screening */
+    body[data-page="onboarding"] #navLinks, body[data-page="onboarding"] #notifBtn, body[data-page="onboarding"] .mobile-nav, body[data-page="onboarding"] #notifPanel,
+    body[data-page="screening"] #navLinks, body[data-page="screening"] #notifBtn, body[data-page="screening"] .mobile-nav, body[data-page="screening"] #notifPanel { display: none !important; }
   </style>
 </head>
 
@@ -5175,6 +5179,7 @@
       if (['matches', 'my-matches', 'chat'].includes(name) && S.user && S.user.onboarded && !S.user.screening_complete) {
         toast('Please complete your profile screening to start matching', 'info'); name = 'screening';
       }
+      document.body.dataset.page = name;
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       const pg = document.getElementById('page-' + name);
       if (pg) pg.classList.add('active');
