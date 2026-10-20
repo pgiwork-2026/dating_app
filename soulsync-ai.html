@@ -4157,6 +4157,9 @@
       .sw-stamp.like { left: 18px; color: #1FD08F; border-color: #1FD08F; transform: rotate(-14deg); }
       .sw-stamp.nope { right: 18px; color: #FE3C72; border-color: #FE3C72; transform: rotate(14deg); }
     }
+
+    /* Hide app navigation + bell until signed in */
+    body:not(.logged-in) #navLinks, body:not(.logged-in) #notifBtn, body:not(.logged-in) .mobile-nav, body:not(.logged-in) #notifPanel { display: none !important; }
   </style>
 </head>
 
@@ -5168,6 +5171,7 @@
 
     // ══════════ ROUTER ══════════
     function showPage(name) {
+      if (!S.user && !['landing', 'login', 'signup'].includes(name)) name = 'landing';
       if (['matches', 'my-matches', 'chat'].includes(name) && S.user && S.user.onboarded && !S.user.screening_complete) {
         toast('Please complete your profile screening to start matching', 'info'); name = 'screening';
       }
@@ -5231,6 +5235,7 @@
     }
 
     function setLoggedIn() {
+      document.body.classList.add('logged-in');
       document.getElementById('authBtns').style.display = 'none';
       const pill = document.getElementById('userPill'); pill.classList.add('visible');
       document.getElementById('pillAvatar').textContent = (S.user.first || 'U')[0].toUpperCase();
@@ -5245,6 +5250,7 @@
       notifications = []; renderNotifList(); updateBadges();
       DB.clear(); localStorage.removeItem('ss_token');
       S.user = null; S.myLikes = [];
+      document.body.classList.remove('logged-in');
       document.getElementById('authBtns').style.display = 'flex';
       document.getElementById('userPill').classList.remove('visible');
       toast('👋 Signed out', 'info');
