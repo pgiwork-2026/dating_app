@@ -3620,7 +3620,7 @@
     #loveCursor svg { display:block; }
     .tap-ripple { position:fixed; pointer-events:none; z-index:99998; width:14px; height:14px; margin:-7px 0 0 -7px; border-radius:50%; border:2px solid rgba(255,62,108,.7); background:rgba(255,126,179,.25); animation:tapRipple .6s ease-out forwards; }
     @keyframes tapRipple { to { transform:scale(6); opacity:0; } }
-    @media (hover:none), (pointer:coarse) { #loveCursor { display:none !important; } }
+    @media (hover:none), (pointer:coarse), (max-width:900px) { #loveCursor { display:none !important; visibility:hidden !important; } }
     .cursor-burst {
       position: fixed;
       pointer-events: none;
@@ -5137,6 +5137,7 @@
       if (n.hub) {                               // dating / video requests are answered in the Hub
         document.getElementById('notifPanel').classList.remove('open');
         showPage('hub');
+        cursor.remove();
         return;
       }
       if ((n.revealName || n.chatName) && n.userId) {   // photo reveal / message / reveal-step notifications open the chat
@@ -6116,7 +6117,7 @@
     ══════════════════════════════════════════ */
     (function initCursor() {
       const cursor = document.getElementById('loveCursor');
-      const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+      const isTouch = window.matchMedia('(hover: none), (pointer: coarse), (max-width: 900px)').matches || navigator.maxTouchPoints > 0 || 'ontouchstart' in window;
       if (isTouch) {
         document.addEventListener('pointerdown', e => {
           const r = document.createElement('div');
