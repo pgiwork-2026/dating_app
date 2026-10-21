@@ -276,3 +276,12 @@ def test_recheck_resolves_a_pending_proof(env, monkeypatch):
     _ai(monkeypatch, {"ok": True, "r": ""})
     assert J(c, "post", "/api/challenge/recheck", H(m, "u1")).status_code == 200
     assert db.t["challenge_submissions"][0]["status"] == "approved"
+
+def test_dev_skip_is_off_by_default_and_works_when_enabled(env, monkeypatch):
+    m, db, c, h = env; lock_out(db, "u1")
+    monkeypatch.delenv("DEV_SKIP_CHALLENGE", raising=False)
+    assert J(c, "post", "/api/dev/challenge/complete", H(m, "u1")).status_code == 404
+    assert next(u for u in db.t["users"] if u["id"] == "u1")["challenge_complete"] is False
+    monkeypatch.setenv("DEV_SKIP_CHALLENGE", "1")
+    assert J(c, "post", "/api/dev/challenge/complete", H(m, "u1")).status_code == 200
+    assert next(u for u in db.t["users"] if u["id"] == "u1")["challenge_complete"] is True

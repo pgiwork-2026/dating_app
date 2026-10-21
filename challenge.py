@@ -19,6 +19,7 @@ import base64
 import hashlib
 import io
 import json
+import os
 import re
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -409,6 +410,17 @@ def register(app, g):
         else:
             msg = "Submitted - the automatic check is unavailable, so a reviewer will look at it"
         return ok({"id": row["id"], "status": status, "reason": reason or None, "local_date": today.isoformat()}, msg, 201)
+
+    @app.route("/api/dev/challenge/complete", methods=["POST"])
+    @auth
+    def ch_dev_complete(user_id):
+        """TESTING ONLY. Marks the caller's own 21-day challenge as complete. Disabled (404) unless DEV_SKIP_CHALLENGE=1 is set on the server."""
+        if os.environ.get("DEV_SKIP_CHALLENGE") != "1":
+            return err("Not found", 404)
+        S().table("users").update({"challenge_complete": True}).eq("id", user_id).execute()
+        S().table("challenge_profiles").update({"completed_at": iso()}).eq("user_id", user_id).execute()
+        notify(user_id, user_id, "challenge_complete", "21-day challenge complete 🎉", "(test shortcut)")
+        return ok({"eligible": True}, "Challenge marked complete (test mode)")
 
     @app.route("/api/challenge/recheck", methods=["POST"])
     @auth

@@ -507,7 +507,7 @@ def get_matches(user_id):
 
     query = (
         supabase.table("users")
-        .select("id, first_name, last_name, age, gender, interested_in, onboarded, screening_complete, verification_status, voice_verified, created_at")
+        .select("id, first_name, last_name, age, gender, interested_in, onboarded, screening_complete, verification_status, voice_verified, challenge_complete, created_at")
         .neq("id", user_id)
         .eq("onboarded", True)
     )
