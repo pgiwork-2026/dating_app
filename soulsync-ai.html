@@ -4972,6 +4972,10 @@
       <div class="profile-wrap" style="padding-top:90px"><div class="profile-sections" id="hubContent"></div></div>
     </div>
 
+    <div class="page" id="page-challenge">
+      <div class="profile-wrap" style="padding-top:90px"><div class="profile-sections" id="challengeContent"></div></div>
+    </div>
+
     <div class="page video-page-dark" id="page-video">
       <div id="videoContent"></div>
     </div>
@@ -5178,6 +5182,8 @@
       if (!S.user && !['landing', 'login', 'signup'].includes(name)) name = 'landing';
       if (['matches', 'my-matches', 'chat'].includes(name) && S.user && S.user.onboarded && !S.user.screening_complete) {
         toast('Please complete your profile screening to start matching', 'info'); name = 'screening';
+      } else if (name === 'matches' && S.user && S.user.onboarded && S.user.screening_complete && !S.user.challenge_complete) {
+        toast('Finish the 21-day challenge and movie journal to unlock matches', 'info'); name = 'challenge';   // the server enforces this too
       }
       document.body.dataset.page = name;
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -5191,6 +5197,7 @@
       if (name === 'profile') renderProfile();
       if (name === 'hub') loadHub();
       if (name === 'screening') loadScreening();
+      if (name === 'challenge') loadChallenge();
       document.getElementById('notifPanel').classList.remove('open');
       window.scrollTo(0, 0);
     }
@@ -5232,7 +5239,7 @@
       if (!data.success) { toast(data.error || 'Login failed', 'error'); return; }
       localStorage.setItem('ss_token', data.data.token);
       const u = data.data.user;
-      S.user = { id: u.id, first: u.first_name, name: u.first_name + ' ' + (u.last_name || ''), email: u.email, age: u.age, gender: u.gender, interest: u.interested_in, onboarded: u.onboarded, screening_complete: !!u.screening_complete };
+      S.user = { id: u.id, first: u.first_name, name: u.first_name + ' ' + (u.last_name || ''), email: u.email, age: u.age, gender: u.gender, interest: u.interested_in, onboarded: u.onboarded, screening_complete: !!u.screening_complete, challenge_complete: !!u.challenge_complete };
       DB.set('user', S.user);
       setLoggedIn();
       toast('👋 Welcome back, ' + u.first_name + '!', 'success');
@@ -6855,7 +6862,7 @@ function applyAvatar(key) {
 async function loadAvatarFromServer() {
   const d = await apiFetch('profile/me');
   if (d.success && d.data) { S.isAdmin = !!d.data.is_admin; S.avatar = d.data.user && d.data.user.avatar; applyAvatar(S.avatar);
-    if (d.data.user && S.user) { S.user.screening_complete = !!d.data.user.screening_complete; DB.set('user', S.user);
+    if (d.data.user && S.user) { S.user.screening_complete = !!d.data.user.screening_complete; S.user.challenge_complete = !!d.data.user.challenge_complete; DB.set('user', S.user);
       if (S.user.onboarded && !S.user.screening_complete && document.getElementById('page-matches').classList.contains('active')) showPage('screening'); } }
 }
 const hSec = (title, body) => `<div class="hub-card"><h4 style="margin-bottom:6px">${title}</h4>${body}</div>`;
@@ -6873,6 +6880,7 @@ async function loadHub() {
     <p style="font-size:12px;color:var(--ink3)">Send a message or like a profile today, then count it.</p>
     <div class="hub-row"><button class="btn-primary" onclick="hubCheckin()">Count today's activity</button></div>` : hErr(st));
   h += hSec('📋 Profile screening', `<p>Status: <b>${pme.success && pme.data.user && pme.data.user.screening_complete ? 'complete' : 'incomplete'}</b></p><div class="hub-row"><button class="btn-outline" onclick="showPage('screening')">Review / update answers</button></div>`);
+  h += hSec('🏁 21-day challenge', `<p>Status: <b>${pme.success && pme.data.user && pme.data.user.challenge_complete ? 'complete — eligible for matches' : 'in progress'}</b></p><div class="hub-row"><button class="btn-primary" onclick="showPage('challenge')">Open challenge &amp; movie journal</button></div>`);
   // Avatar
   const cur = pme.success && pme.data.user ? pme.data.user.avatar : null;
   h += hSec('🐾 Animal avatar', `<div class="hub-row">${Object.keys(ANIMALS).map(k => `<span class="hub-av ${k === cur ? 'sel' : ''}" title="${k}" onclick="hubSetAvatar('${k}')">${ANIMALS[k]}</span>`).join('')}</div>`);
@@ -7425,6 +7433,133 @@ async function closenessAnswer(uid, answer) {
   const hint = () => { try { if (mobile() && !localStorage.getItem('ss_swipe_hint') && grid.querySelector('.mcard') && typeof toast === 'function') { localStorage.setItem('ss_swipe_hint', '1'); toast('Swipe right to like, left to pass', 'success'); } } catch (e) {} };
   new MutationObserver(hint).observe(grid, { childList: true });
 })();
+</script>
+<style>
+  .ch-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 12px; }
+  .ch-day { position: relative; overflow: hidden; aspect-ratio: 1; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; background: #f6f1f4; border: 2px solid transparent; transition: transform .2s; }
+  .ch-day b { font-size: 15px; }
+  .ch-day.approved { background: #e6f7ee; } .ch-day.pending { background: #fff7e0; } .ch-day.rejected { background: #fde8e8; }
+  .ch-day.missed { background: #eee; color: #999; } .ch-day.today { border-color: #ff4d8d; } .ch-day.future { opacity: .55; }
+  .ch-bar { height: 10px; border-radius: 6px; background: #f0e6ec; overflow: hidden; margin-top: 8px; } .ch-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #ff4d8d, #ff8fb1); transition: width .5s; }
+  .ch-chip { display: inline-block; padding: 6px 12px; margin: 3px; border-radius: 999px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 13px; }
+  .ch-chip[aria-pressed="true"] { background: #ff4d8d; color: #fff; border-color: #ff4d8d; } .ch-chip.like { background: #e6f7ee; cursor: default; } .ch-chip.dis { background: #fde8e8; cursor: default; } .ch-chip.unc { background: #f3f0ff; cursor: default; }
+  .ch-lbl { display: block; font-size: 13px; color: var(--ink3); margin: 10px 0 4px; } .ch-note { font-size: 12px; color: var(--ink3); margin-top: 6px; }
+  .ch-movie { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f0e6ec; font-size: 14px; }
+  @media (max-width: 480px) { .ch-cal { gap: 5px; } .ch-day { font-size: 10px; } .ch-day b { font-size: 13px; } }
+  @media (prefers-reduced-motion: reduce) { .ch-day, .ch-bar > i { transition: none; } }
+</style>
+<script>
+/* ══════════ 21-DAY CHALLENGE · MOVIE JOURNAL · PAIRING STATUS (all state is computed by the Flask API) ══════════ */
+const CH = { step: 0, prof: null, pick: { genres_like: [], genres_dislike: [], mgenres: [] } };
+const chBox = () => document.getElementById('challengeContent');
+const chIcon = { approved: '✅', pending: '⏳', rejected: '❌', missed: '·', today: '📸', future: '' };
+const chChips = (list, key, cur) => list.map(g => `<button type="button" class="ch-chip" aria-pressed="${cur.includes(g)}" onclick="chToggle('${key}','${g}')">${hE(g)}</button>`).join('');
+function chToggle(key, g) { const a = CH.pick[key], i = a.indexOf(g); i < 0 ? a.push(g) : a.splice(i, 1); if (key === 'mgenres' && a.length > 6) a.pop(); loadChallengeKeep(); }
+let _chDraft = {};
+function chKeepInputs() { chBox().querySelectorAll('[data-k]').forEach(el => { _chDraft[el.dataset.k] = el.value; }); }
+function chRestoreInputs() { chBox().querySelectorAll('[data-k]').forEach(el => { if (_chDraft[el.dataset.k] != null) el.value = _chDraft[el.dataset.k]; }); }
+function loadChallengeKeep() { chKeepInputs(); chRender(); chRestoreInputs(); }
+async function loadChallenge() {
+  if (!S.user) return;
+  chBox().innerHTML = '<p style="padding:20px;color:var(--ink3)">Loading…</p>';
+  const [p, st, pr] = await Promise.all(['challenge/profile', 'challenge/status', 'pairing'].map(x => apiFetch(x)));
+  if (!p.success || !st.success) { chBox().innerHTML = hSec('21-day challenge', hErr(p.success ? st : p) + '<div class="hub-row"><button class="btn-outline" onclick="loadChallenge()">Try again</button></div>'); return; }
+  CH.prof = p.data; CH.st = st.data; CH.pair = pr.success ? pr.data : { active: false };
+  if (!CH.seeded) { CH.pick.genres_like = [...(p.data.genres_like || [])]; CH.pick.genres_dislike = [...(p.data.genres_dislike || [])]; CH.seeded = true; }
+  if (S.user && !!st.data.eligible !== !!S.user.challenge_complete) { S.user.challenge_complete = !!st.data.eligible; DB.set('user', S.user); }
+  CH.movies = (await apiFetch('movies')).data || { movies: [], insights: st.data.movies };
+  chRender();
+}
+function chRender() {
+  const st = CH.st, p = CH.prof; let h = '';
+  if (CH.pair && CH.pair.active) h += hSec('💞 Exclusive match', `<p>You're paired with <b>${hE(CH.pair.partner_first_name || 'your match')}</b>. Discovery is paused for both of you until the connection ends.</p><div class="hub-row"><button class="btn-primary" onclick="showPage('chat')">Open private chat</button></div>`);
+  if (st.eligible) h += hSec('🎉 You\'re eligible for matchmaking', `<p>You completed the challenge and movie analysis. Eligibility shows consistency; it doesn't guarantee a match.</p><div class="hub-row"><button class="btn-primary" onclick="showPage('matches')">Go to Discover</button></div>`);
+  if (st.onboarding_missing.length) { h += chWizard(); chBox().innerHTML = h; chRestoreInputs(); return; }
+  const pct = Math.round(st.approved_in_run / 21 * 100);
+  h += hSec('📅 Your 21-day challenge · ' + hE(p.hobby), `<p><b>${st.current_streak}</b>-day streak · <b>${st.approved_in_run}</b>/21 approved · best ${st.best_streak}${st.next_milestone ? ' · next milestone: day ' + st.next_milestone + ' (' + st.days_to_next_milestone + ' to go)' : ''}</p>
+    <div class="ch-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
+    <div class="ch-cal">${st.days.map(d => `<div class="ch-day ${d.status}" title="${hE(d.date)} · ${d.status}"><b>${d.day}</b><span aria-hidden="true">${chIcon[d.status] || ''}</span><span style="position:absolute;left:-9999px">${d.status}</span></div>`).join('')}</div>
+    <p class="ch-note">${hE(st.policy)}</p>`);
+  let sub;
+  if (st.eligible && st.submitted_today) sub = '<p>Today\'s proof is in. 👏</p>';
+  else if (st.today_status === 'pending') sub = '<p>⏳ Today\'s proof is waiting for a reviewer (the automatic AI check was unavailable). <button class="btn btn-sm" onclick="chRecheck(this)">Retry AI check</button></p>';
+  else if (st.today_status === 'approved') sub = '<p>✅ Today is approved. Come back tomorrow.</p>';
+  else sub = `${st.today_status === 'rejected' ? `<p style="color:#c0392b">❌ Rejected${st.today_reject_reason ? ': ' + hE(st.today_reject_reason) : ''}. Upload a new photo to resubmit.</p>` : ''}
+    <label class="ch-lbl" for="chFile">Today's ${hE(p.hobby)} proof (JPEG, PNG or WebP, max 5 MB)</label>
+    <div class="hub-row"><input type="file" id="chFile" accept="image/jpeg,image/png,image/webp" class="hub-in"><button class="btn-primary" id="chSubmitBtn" onclick="chSubmit()">Submit proof</button></div>`;
+  h += hSec('📸 Daily proof', sub + `<p class="ch-note">${hE(st.proof_note)} Proofs are private; other users never see them.</p><div id="chMsg" role="status" class="ch-note"></div>`);
+  h += chMovies();
+  h += hSec('⚙️ Preferences', `<p class="ch-note">Editing your answers never resets your streak.</p><div class="hub-row"><button class="btn-outline" onclick="CH.step=0;CH.edit=true;chRenderWizardOnly()">Edit onboarding answers</button></div>`);
+  chBox().innerHTML = h; chRestoreInputs();
+}
+function chRenderWizardOnly() { chBox().innerHTML = chWizard(); chRestoreInputs(); }
+function chWizard() {
+  const p = CH.prof, r = p.routine || {}, tz = (Intl.DateTimeFormat().resolvedOptions().timeZone) || 'Asia/Kolkata';
+  const dv = (k, v) => { if (_chDraft[k] == null && v != null) _chDraft[k] = v; };
+  dv('hobby', p.hobby || ''); dv('timezone', p.timezone && p.hobby ? p.timezone : tz); ['sleep', 'work', 'habits', 'participation', 'communication', 'boundaries', 'partner_qualities'].forEach(k => dv(k, r[k] || ''));
+  dv('languages', (p.languages || []).join(', ')); dv('fav_films', (p.fav_films || []).join(', '));
+  const f = (k, label, ph) => `<label class="ch-lbl" for="w_${k}">${label}</label><input class="hub-in" style="width:100%" id="w_${k}" data-k="${k}" maxlength="80" placeholder="${ph || ''}">`;
+  const steps = [
+    `<h4>1 of 3 · Hobby & schedule</h4><label class="ch-lbl" for="w_hobby">Your 21-day hobby</label><select class="hub-in" id="w_hobby" data-k="hobby"><option value="">Choose…</option>${p.hobbies.map(x => `<option>${hE(x)}</option>`).join('')}</select>
+      ${f('timezone', 'Timezone (locked for 7 days after a change)', 'Asia/Kolkata')}${f('sleep', 'Sleep schedule', 'e.g. 11pm–6am')}${f('work', 'Work / study schedule', 'e.g. 9–6 weekdays')}${f('habits', 'Daily habits', 'e.g. morning walk')}${f('participation', 'How often will you take part?', 'e.g. daily')}`,
+    `<h4>2 of 3 · Relationship style</h4>${f('communication', 'Communication style', 'e.g. thoughtful, texts daily')}${f('boundaries', 'Boundaries', '')}${f('partner_qualities', 'Qualities you value in a partner', '')}<p class="ch-note">Your other compatibility answers come from the profile screening. They are never shown to other people.</p>`,
+    `<h4>3 of 3 · Movie taste</h4><label class="ch-lbl">Genres you like</label><div>${chChips(p.genres, 'genres_like', CH.pick.genres_like)}</div><label class="ch-lbl">Genres you dislike</label><div>${chChips(p.genres, 'genres_dislike', CH.pick.genres_dislike)}</div>
+      ${f('languages', 'Languages (comma separated)', 'tamil, english')}${f('fav_films', 'Favourite films (comma separated, up to 5)', '')}`];
+  CH.stepsHtml = steps;
+  return hSec('📝 Onboarding · ' + (CH.edit ? 'edit answers' : 'required before the challenge'), `<div id="chWiz">${steps[CH.step]}</div><div id="chWMsg" role="alert" class="ch-note" style="color:#c0392b"></div>
+    <div class="hub-row">${CH.step > 0 ? '<button class="btn-outline" onclick="chStep(-1)">← Back</button>' : ''}<button class="btn-primary" onclick="chStep(1)">${CH.step === 2 ? 'Save' : 'Continue →'}</button></div>`);
+}
+function chStep(d) {
+  chKeepInputs(); const m = document.getElementById('chWMsg');
+  if (d < 0) { CH.step--; chRenderWizardOnly(); return; }
+  if (CH.step === 0 && !_chDraft.hobby) { m.textContent = 'Choose a hobby to continue'; return; }
+  if (CH.step < 2) { CH.step++; chRenderWizardOnly(); return; }
+  chSaveProfile();
+}
+const chList = s => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
+async function chSaveProfile() {
+  const D = _chDraft, body = { hobby: D.hobby, timezone: D.timezone, routine: { sleep: D.sleep, work: D.work, habits: D.habits, participation: D.participation, communication: D.communication, boundaries: D.boundaries, partner_qualities: D.partner_qualities },
+    genres_like: CH.pick.genres_like, genres_dislike: CH.pick.genres_dislike, languages: chList(D.languages), fav_films: chList(D.fav_films).slice(0, 5) };
+  const d = await apiFetch('challenge/profile', 'PUT', body);
+  if (!d.success) { const m = document.getElementById('chWMsg'); if (m) m.textContent = d.error; if (/hobby|timezone|routine/.test(d.error || '')) { CH.step = 0; } return; }
+  toast('Saved', 'success'); CH.edit = false; CH.step = 0; CH.seeded = false; _chDraft = {}; loadChallenge();
+}
+async function chSubmit() {
+  const f = document.getElementById('chFile').files[0], m = document.getElementById('chMsg');
+  if (!f) { m.textContent = 'Choose a photo first'; return; }
+  const b = document.getElementById('chSubmitBtn'); b.disabled = true; b.textContent = 'Uploading…';
+  const fd = new FormData(); fd.append('proof', f);
+  let d; try { const r = await fetch(API + 'challenge/submit', { method: 'POST', headers: { Authorization: 'Bearer ' + localStorage.getItem('ss_token') }, body: fd }); d = await r.json(); } catch (e) { d = { success: false, error: 'Cannot reach server' }; }
+  if (!d.success) { b.disabled = false; b.textContent = 'Submit proof'; m.textContent = d.error || 'Upload failed'; m.style.color = '#c0392b'; return; }
+  toast(d.message || 'Submitted', (d.data && d.data.status === 'rejected') ? 'error' : 'success'); loadChallenge();
+}
+async function chRecheck(btn) {
+  btn.disabled = true; btn.textContent = 'Checking…';
+  let d; try { const r = await fetch(API + 'challenge/recheck', { method: 'POST', headers: { Authorization: 'Bearer ' + localStorage.getItem('ss_token') } }); d = await r.json(); } catch (e) { d = { success: false, error: 'Cannot reach server' }; }
+  toast(d.success ? d.message : (d.error || 'Check failed'), d.success && d.data.status === 'approved' ? 'success' : 'error'); loadChallenge();
+}
+function chMovies() {
+  const mv = CH.movies, ins = mv.insights;
+  const chips = (a, c) => (a || []).map(g => `<span class="ch-chip ${c}">${hE(g)}</span>`).join('') || '<span class="ch-note">none yet</span>';
+  const need = ins.ready ? '<p>✅ Movie analysis ready.</p>' : `<p class="ch-note">Log at least ${ins.needs.movies} more movie(s) across ${ins.needs.genres ? ins.needs.genres + ' more genre(s)' : 'your genres'}, rating some genres more than once, to complete the analysis (needed for eligibility).</p>`;
+  const sel = `<div>${chChips(CH.prof.genres, 'mgenres', CH.pick.mgenres)}</div>`;
+  return hSec('🎬 Movie journal', `${need}
+    <div class="hub-row"><input class="hub-in" data-k="mt" id="mt" maxlength="120" placeholder="Title" aria-label="Movie title"><input class="hub-in" data-k="ml" id="ml" maxlength="30" placeholder="Language" aria-label="Language">
+    <select class="hub-in" data-k="mr" id="mr" aria-label="Rating">${[5, 4, 3, 2, 1].map(n => `<option value="${n}">${'★'.repeat(n)}</option>`).join('')}</select></div>
+    <label class="ch-lbl">Genres (pick up to 6)</label>${sel}
+    <input class="hub-in" style="width:100%;margin-top:8px" data-k="mv" id="mv" maxlength="500" placeholder="Short review (optional)" aria-label="Review">
+    <div class="hub-row"><button class="btn-primary" onclick="chAddMovie()">Add to journal</button><span id="mMsg" role="status" class="ch-note"></span></div>
+    <h4 style="margin-top:14px">Your taste so far</h4><div>👍 ${chips(ins.likes, 'like')}</div><div>👎 ${chips(ins.dislikes, 'dis')}</div><div>🤔 ${chips(ins.uncertain, 'unc')}</div>
+    <p class="ch-note">A genre only counts as liked or disliked after repeated ratings, never from one movie. Matches see only genres and languages you share.</p>
+    <div style="margin-top:8px">${mv.movies.length ? mv.movies.map(x => `<div class="ch-movie"><span>${hE(x.title)} <small>(${hE((x.genres || []).join(', '))}${x.language ? ' · ' + hE(x.language) : ''})</small> ${'★'.repeat(x.rating)}</span><button class="btn-outline" onclick="chDelMovie('${hE(x.id)}')" aria-label="Remove ${hE(x.title)}">Remove</button></div>`).join('') : '<p class="ch-note">No movies logged yet. Add the first one above.</p>'}</div>`);
+}
+async function chAddMovie() {
+  chKeepInputs(); const D = _chDraft, m = document.getElementById('mMsg');
+  const d = await apiFetch('movies', 'POST', { title: D.mt, language: D.ml, rating: +D.mr || 5, genres: CH.pick.mgenres, review: D.mv });
+  if (!d.success) { m.textContent = d.error; m.style.color = '#c0392b'; return; }
+  toast('Logged', 'success'); ['mt', 'ml', 'mv'].forEach(k => delete _chDraft[k]); CH.pick.mgenres = []; loadChallenge();
+}
+async function chDelMovie(id) { if (!confirm('Remove this movie from your journal?')) return; const d = await apiFetch('movies/' + id, 'DELETE'); if (!d.success) { toast(d.error, 'error'); return; } loadChallenge(); }
 </script>
 </body>
 </html>

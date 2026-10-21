@@ -136,8 +136,11 @@ def test_likes_between_eligible_screened_users_still_work(env):
     assert J(c, "post", "/api/likes", h("u1"), {"liked_id": "u2"}).status_code == 200
     assert J(c, "post", "/api/likes", h("u2"), {"liked_id": "u1"}).status_code == 200
     assert J(c, "post", "/api/conversations/open", h("u1"), {"other_user_id": "admin1"}).status_code == 403   # no mutual like yet
-    assert J(c, "post", "/api/likes", h("admin1"), {"liked_id": "u1"}).status_code == 200
-    assert J(c, "post", "/api/conversations/open", h("u1"), {"other_user_id": "admin1"}).status_code in (200, 201)
+    # u1 and u2 are now an exclusive pair, so nobody else can like or open a chat with u1 (was: multiple simultaneous matches)
+    assert J(c, "post", "/api/likes", h("admin1"), {"liked_id": "u1"}).status_code == 403
+    assert J(c, "post", "/api/likes", h("u3"), {"liked_id": "admin1"}).status_code == 200
+    assert J(c, "post", "/api/likes", h("admin1"), {"liked_id": "u3"}).status_code == 200
+    assert J(c, "post", "/api/conversations/open", h("u3"), {"other_user_id": "admin1"}).status_code in (200, 201)
 
 def test_login_payload_reports_screening_state(env):
     m, db, c, h = env

@@ -490,6 +490,10 @@ def get_matches(user_id):
     pers_data  = pers[0]  if pers  else {}
     if not user.get("screening_complete"):
                 return ok([], "Complete your profile screening to see matches")
+    if not user.get("challenge_complete"):
+        return ok([], "Complete the 21-day challenge and movie journal to unlock matches")
+    if _paired_with(user_id):
+        return ok([], "You're in an exclusive match, so discovery is paused")
     if not _ready(user):
         return ok([], "Verify your photo and voice in the Hub to see matches")
 
@@ -555,7 +559,8 @@ def get_matches(user_id):
     candidates = _vis
     _ended_ids = _ended_with(user_id)
     _engaged = _engaged_ids()
-    candidates = [c for c in candidates if c["id"] not in _ended_ids and c["id"] not in _engaged]   # never show someone you ended things with
+    _paired = _paired_ids()
+    candidates = [c for c in candidates if c["id"] not in _ended_ids and c["id"] not in _engaged and c["id"] not in _paired]   # never show someone you ended things with
 
     # Score each candidate
     results = []
@@ -568,7 +573,7 @@ def get_matches(user_id):
         cp       = c_pers[0]    if c_pers    else {}
 
         # Compatibility score (simple algorithm — plug in ML model in production)
-        score, _factors = _match_score(my_screen, pers_data, scr_by_id.get(c["id"], {}), cp)
+        score, _factors = _match_score(my_screen, pers_data, scr_by_id.get(c["id"], {}), cp, movie=_movie_pair(user_id, c["id"]))
 
         created_at = c.get("created_at","")
         is_new = False
@@ -659,12 +664,15 @@ def compatibility_report(user_id, match_id):
     _mu = supabase.table("users").select("first_name, last_name").eq("id", match_id).execute().data
     if not _mu:
         return err("User not found", 404)
+    _gg = None if (match_id == user_id or _have_conversation(user_id, match_id)) else _gate(user_id, match_id)
+    if _gg:
+        return _gg
     m_user = _mu[0]
 
     pd1 = p1[0] if p1 else {}
     pd2 = p2[0] if p2 else {}
 
-    overall, _factors = _match_score(_screen_row(user_id), pd1, _screen_row(match_id), pd2)
+    overall, _factors = _match_score(_screen_row(user_id), pd1, _screen_row(match_id), pd2, movie=_movie_pair(user_id, match_id))
 
     report = {
         "match_id":   match_id,
@@ -705,6 +713,10 @@ def get_user(user_id, target_id):
     user = supabase.table("users").select("id, first_name, last_name, age, gender").eq("id", target_id).execute().data
     if not user:
         return err("User not found", 404)
+    if target_id != user_id and not _have_conversation(user_id, target_id):     # strict pre-match privacy: only completed users see each other
+        _both = {x["id"]: x for x in supabase.table("users").select("*").in_("id", [user_id, target_id]).execute().data}
+        if len(_both) < 2 or not (_ready(_both[user_id]) and _ready(_both[target_id])):
+            return err("User not found", 404)
     u = user[0]
     profile = supabase.table("profiles").select("bio, city, occupation, photos, anonymous_mode").eq("user_id", target_id).execute().data
     p = profile[0] if profile else {}
@@ -810,6 +822,10 @@ def like_user(user_id):
     is_mutual = bool(mutual.data)
 
     if is_mutual:
+        _pok, _pwhy = _form_pairing(user_id, liked_id)      # atomic: one exclusive active pairing per user
+        if not _pok:
+            return err("This person is no longer available", 409) if _pwhy == "unavailable" else err("Matching is temporarily unavailable", 503)
+        _cancel_other_opportunities(user_id, liked_id)
         # Create match record
         supabase.table("matches").upsert({
             "user1_id":  min(user_id, liked_id),
@@ -890,6 +906,10 @@ def open_conversation(user_id):
     else:
         if not supabase.table("likes").select("liker_id").eq("liker_id", other_id).eq("liked_id", user_id).execute().data:
             return err("Like sent. You can start chatting once they like you back", 403)
+        _pok, _pwhy = _form_pairing(user_id, other_id)
+        if not _pok:
+            return err("This person is no longer available", 409) if _pwhy == "unavailable" else err("Matching is temporarily unavailable", 503)
+        _cancel_other_opportunities(user_id, other_id)
         # Create the conversation directly
         convo = supabase.table("conversations").insert({
             "user1_id":   min(user_id, other_id),
@@ -2056,8 +2076,8 @@ def _ai_check_voice(data, ctype, phrase):
 
 
 def _ready(u):
-    """Matches are only usable after profile screening + AI photo verification + AI voice verification."""
-    return bool(u and u.get("screening_complete") and u.get("verification_status") == "verified" and u.get("voice_verified"))
+    """Matches are only usable after profile screening + AI photo verification + AI voice verification + the 21-day challenge and movie analysis."""
+    return bool(u and u.get("screening_complete") and u.get("verification_status") == "verified" and u.get("voice_verified") and u.get("challenge_complete"))
 
 
 def _upload_private(path, data, ctype):
@@ -2303,6 +2323,11 @@ def _jaccard(a, b):
 @require_auth
 def compat_explain(user_id, target_id):
     """Transparent, server-computed score. Only for mutually eligible users."""
+    if not _valid_id(target_id):
+        return err("Not available", 404)
+    _gg = None if (target_id == user_id or _have_conversation(user_id, target_id)) else _gate(user_id, target_id)
+    if _gg:
+        return err("Not available", 404)
     us = supabase.table("users").select("id, gender, interested_in").in_("id", [user_id, target_id]).execute().data
     by = {u["id"]: u for u in us}
     if user_id not in by or target_id not in by or not _eligible(by[user_id], by[target_id]):
@@ -2389,6 +2414,7 @@ def end_connection(user_id, other_id):
         return err("No active connection", 404)
     d = request.get_json(silent=True) or {}
     u1, u2 = _pair(user_id, other_id)
+    _end_pairing(user_id, other_id, user_id)     # frees both people only after the explicit end/unmatch
     # photos lock again and any open photo-reveal request is closed
     supabase.table("photo_reveal_permissions").update({"enabled": False}).eq("user1_id", u1).eq("user2_id", u2).execute()
     supabase.table("photo_reveal_requests").update({"status": "cancelled"}).eq("status", "pending") \
@@ -2835,6 +2861,11 @@ def _gate(user_id, other_id):
         return err("User not found", 404)
     if not us[user_id].get("screening_complete"):
         return err("Complete your profile screening first", 403)
+    if not us[user_id].get("challenge_complete"):
+        return err("Complete the 21-day challenge first", 403)
+    _pw_me, _pw_o = _paired_with(user_id), _paired_with(other_id)
+    if (_pw_me and _pw_me != other_id) or (_pw_o and _pw_o != user_id):      # exclusivity: nobody with an active pairing can be liked/opened
+        return err("You can't interact with this profile", 403)
     ok_, _ = _pair_ok(us[user_id], _screen_row(user_id), us[other_id], _screen_row(other_id))
     return None if ok_ else err("You can't interact with this profile", 403)
 
@@ -2844,7 +2875,7 @@ def _overlap(a, b):
     return len(a & b) / min(len(a), len(b)) * 100 if a and b else 60.0
 
 
-def _match_score(a, pa, b, pb):
+def _match_score(a, pa, b, pb, movie=None):
     """Returns (score 5-99, factors[]). Deterministic; falls back to the personality score when screening data is missing."""
     base = _compute_compatibility(pa, pb)
     if not a or not b:
@@ -2867,11 +2898,16 @@ def _match_score(a, pa, b, pb):
         "location": 100 if (a.get("city") or "").strip().lower() == (b.get("city") or "").strip().lower() else (30 if dp < 100 else 55),
     }
     total = sum(s[k] * w for k, w in SCREEN_WEIGHTS.items()) / sum(SCREEN_WEIGHTS.values())
+    if movie:   # movie taste = 8% of the final score (local rules-based baseline, see challenge.movie_compat)
+        total = total * 0.92 + movie[0] * 0.08
     # Fundamental conflicts cap the score (documented): opposite relationship goals -> max 60, opposite family plans -> max 55
     if s["goal"] <= 25: total = min(total, 60)
     if s["children"] == 0: total = min(total, 55)
     factors = sorted(({"key": k, "label": FACTOR_LABELS[k], "score": round(s[k]), "weight": w} for k, w in SCREEN_WEIGHTS.items()),
                      key=lambda f: -(f["score"] * f["weight"]))
+    if movie:
+        factors.append({"key": "movies", "label": "Movie taste", "score": movie[0], "weight": 8})
+        factors.sort(key=lambda f: -(f["score"] * f["weight"]))
     return min(99, max(5, round(total))), factors
 
 
@@ -2905,6 +2941,10 @@ def convo_compatibility(user_id, convo_id):
 @app.route("/favicon.ico")
 def favicon():
     return "", 204   # silences the browser's favicon 404
+
+
+import challenge
+challenge.register(app, globals())      # 21-day challenge, movie journal, exclusive pairing (see challenge.py)
 
 
 if __name__ == "__main__":

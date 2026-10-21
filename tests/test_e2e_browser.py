@@ -26,7 +26,7 @@ class Env:
         uid = r["data"]["user"]["id"]; self.ids[nm], self.toks[nm] = uid, r["data"]["token"]
         u = next(x for x in self.db.t["users"] if x["id"] == uid); u["onboarded"] = True
         if screened:
-            u["screening_complete"] = True; self.db.t.setdefault("screening_profiles", []).append(test_api.scr_row(uid, gender=u["gender"], interested_in=u["interested_in"]))
+            u["screening_complete"] = True; u["challenge_complete"] = True; self.db.t.setdefault("screening_profiles", []).append(test_api.scr_row(uid, gender=u["gender"], interested_in=u["interested_in"]))
         return uid
     def U(self, nm): return next(u for u in self.db.t["users"] if u["id"] == self.ids[nm])
     def stop(self): self.srv.shutdown(); self.srv.server_close()

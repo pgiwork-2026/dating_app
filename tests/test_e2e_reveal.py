@@ -11,7 +11,7 @@ def test_photo_reveal_end_to_end():
     E = Env(); db = E.db
     try:
         for nm, g in (("Riya", "woman"), ("Aarav", "man")):
-            uid = E.user(nm, g); u = E.U(nm); u["verification_status"] = "verified"; u["voice_verified"] = True
+            uid = E.user(nm, g); u = E.U(nm); u["verification_status"] = "verified"; u["voice_verified"] = True; u["challenge_complete"] = True
             prof = next((r for r in db.t.setdefault("profiles", []) if r.get("user_id") == uid), None)
             if prof is None: prof = {"user_id": uid}; db.t["profiles"].append(prof)
             prof.update({"bio": "hello there friend", "city": "Chennai", "photos": [PHOTO], "anonymous_mode": False})   # signup already created the row

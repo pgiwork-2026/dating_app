@@ -64,16 +64,46 @@ def scr_row(uid, **kw):
              dealbreakers=[], consent={"guidelines": True, "privacy": True, "safety": True}, age_confirmed=True, status="complete")
     r.update(kw); return r
 
+import threading
+
+class _Storage:
+    def __init__(s): s.files = {}
+    def from_(s, b): return s
+    def upload(s, path, data, opts=None): s.files[path] = data
+    def download(s, path): return s.files[path]
+    def create_signed_url(s, path, secs): return {"signedURL": "https://signed.example/" + path}
+
+class _RPC:
+    def __init__(s, db, name, args): s.db, s.name, s.args = db, name, args
+    def execute(s):     # mirrors create_exclusive_pairing / end_exclusive_pairing in migration_challenge.sql (atomic via a lock)
+        db, a, b = s.db, s.args["a"], s.args["b"]
+        with db.lock:
+            ap, pm = db.t.setdefault("active_pairings", []), db.t.setdefault("pairing_members", [])
+            u1, u2 = min(a, b), max(a, b)
+            if s.name == "create_exclusive_pairing":
+                if any(p["status"] == "active" and p["user1_id"] == u1 and p["user2_id"] == u2 for p in ap): return None
+                if any(m["active"] and m["user_id"] in (a, b) for m in pm): raise Exception("already_paired")
+                pid = f"pair-{len(ap)+1}"; ap.append({"id": pid, "user1_id": u1, "user2_id": u2, "status": "active"})
+                pm.extend([{"pairing_id": pid, "user_id": u1, "active": True}, {"pairing_id": pid, "user_id": u2, "active": True}])
+            elif s.name == "end_exclusive_pairing":
+                for p in ap:
+                    if p["status"] == "active" and p["user1_id"] == u1 and p["user2_id"] == u2:
+                        p["status"] = "ended"
+                        for m in pm:
+                            if m["pairing_id"] == p["id"]: m["active"] = False
+            else: raise Exception("unknown rpc")
+
 class FakeDB:
-    def __init__(s): s.t = {}
+    def __init__(s): s.t = {}; s.lock = threading.Lock(); s.storage = _Storage()
     def table(s, n): return Q(s.t, n)
+    def rpc(s, name, args): return _RPC(s, name, args)
 
 @pytest.fixture()
 def env():
     db = FakeDB(); _sb.create_client = lambda *a, **k: db
     import app as m; importlib.reload(m); m.supabase = db; getattr(m, "_RL", {}).clear()
     db.t["users"] = [{"id": i, "first_name": i, "last_name": "X", "gender": g, "interested_in": "woman" if g == "man" else "man", "age": 30,
-                      "dob": "1996-01-01", "screening_complete": True, "verification_status": "verified", "voice_verified": True} for i, g in [("u1", "man"), ("u2", "woman"), ("u3", "man"), ("admin1", "woman")]]
+                      "dob": "1996-01-01", "screening_complete": True, "verification_status": "verified", "voice_verified": True, "challenge_complete": True} for i, g in [("u1", "man"), ("u2", "woman"), ("u3", "man"), ("admin1", "woman")]]
     db.t["screening_profiles"] = [scr_row(u["id"], gender=u["gender"], interested_in=u["interested_in"]) for u in db.t["users"]]
     db.t["conversations"] = [{"id": "c1", "user1_id": "u1", "user2_id": "u2", "phase": "anon"}]
     db.t["messages"] = [{"id": "m1", "conversation_id": "c1", "sender_id": "u2", "content": "hi", "created_at": "2026-01-01"}]
