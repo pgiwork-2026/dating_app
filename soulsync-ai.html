@@ -5201,11 +5201,15 @@
         if (!S.user) return;
         const r = await apiFetch('pairing');
         let b = document.getElementById('partnerBanner');
-        if (!b) { b = document.createElement('div'); b.id = 'partnerBanner'; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:12px;z-index:9998;background:#fff;border:1px solid #f3c1d3;border-radius:50px;padding:7px 16px;font-size:13px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;color:#b0306a'; document.body.appendChild(b); }
+        if (!b) { b = document.createElement('div'); b.id = 'partnerBanner'; b.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:12px;z-index:140;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;background:#fff;border:1px solid #f3c1d3;border-radius:50px;padding:6px 14px;font-size:12px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;color:#b0306a'; document.body.appendChild(b); }
+        const nav = document.getElementById('mobileBottomNav');      // sit above the mobile bottom nav so it never covers the tabs
+        const nh = nav && getComputedStyle(nav).display !== 'none' ? nav.offsetHeight : 0;
+        b.style.bottom = (nh + 10) + 'px';
         if (r && r.success && r.data && r.data.active) { b.textContent = '💞 Exclusively matched with ' + (r.data.partner_first_name || 'your match'); b.style.display = 'block'; }
         else b.style.display = 'none';
       } catch (e) { }
     }
+    window.addEventListener('resize', () => { try { const b = document.getElementById('partnerBanner'), nav = document.getElementById('mobileBottomNav'); if (b && nav) b.style.bottom = ((getComputedStyle(nav).display !== 'none' ? nav.offsetHeight : 0) + 10) + 'px'; } catch (e) { } });
     function addNotif(n) {
       clearTimeout(_pbT); _pbT = setTimeout(refreshPartnerBanner, 1500);
       n.ts = n.ts || (window._curN && window._curN.created_at) || Date.now();
