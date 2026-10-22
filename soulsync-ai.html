@@ -5361,9 +5361,16 @@
     // ══════════ DISCOVER ══════════
     function filterM(f, btn) { document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderDiscover(f); }
 
+    async function syncMyLikes() {   // server is the source of truth, so every device shows the same Liked state
+      try {
+        const r = await apiFetch('likes/mine');
+        if (r && r.success && Array.isArray(r.data)) { S.myLikes = r.data; DB.set('myLikes', S.myLikes); }
+      } catch (e) { }
+    }
     async function renderDiscover(f = 'all') {
       const grid = document.getElementById('matchesGrid');
       grid.innerHTML = '<div class="sk-card"><i></i><b></b><b></b></div>'.repeat(3);
+      await syncMyLikes();
       const data = await apiFetch('matches?filter=' + f);
       if (!data.success || !data.data || data.data.length === 0) {
         grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
@@ -5488,6 +5495,7 @@
     const profileCache = {};
 
     async function openPViewById(userId) {
+      await syncMyLikes();
       const cached = profileCache[userId];
       if (cached) _renderPView(cached);
       else document.getElementById('pviewOverlay').classList.add('open');

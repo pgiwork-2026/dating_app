@@ -2958,6 +2958,14 @@ def _reasons(factors):
 
 
 # ── Audit fixes: routes the frontend already calls but the backend lacked ──
+@app.route("/api/likes/mine", methods=["GET"])
+@require_auth
+def my_likes(user_id):
+    """IDs of everyone the caller has liked: lets every device show the same Liked state."""
+    rows = supabase.table("likes").select("liked_id").eq("liker_id", user_id).execute().data
+    return ok([r["liked_id"] for r in rows])
+
+
 @app.route("/api/likes/<liked_id>", methods=["DELETE"])
 @require_auth
 def unlike_user(user_id, liked_id):
