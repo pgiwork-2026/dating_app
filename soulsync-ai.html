@@ -4298,6 +4298,9 @@
     <button class="mob-nav-item" id="mn-report" onclick="showPage('report');setMobActive('mn-report')">
       <span class="mob-icon">📊</span><span class="mob-label">Report</span>
     </button>
+    <button class="mob-nav-item" id="mn-hub" onclick="showPage('hub');setMobActive('mn-hub')">
+      <span class="mob-icon">🏠</span><span class="mob-label">Hub</span>
+    </button>
     <button class="mob-nav-item" id="mn-profile" onclick="showPage('profile');setMobActive('mn-profile')">
       <span class="mob-icon">👤</span><span class="mob-label">Me</span>
     </button>
@@ -7618,7 +7621,7 @@ async function chDelMovie(id) { if (!confirm('Remove this movie from your journa
 @keyframes skl{to{background-position:-200% 0}}
 /* header more-menu */
 .ch-actions{position:relative}
-.ch-more-menu{display:none;position:absolute;right:0;top:100%;z-index:50;background:#fff;border:1px solid var(--border);border-radius:14px;padding:6px;min-width:190px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.ch-more-menu{display:none;position:fixed;z-index:100000;background:#fff;border:1px solid var(--border);border-radius:14px;padding:6px;min-width:190px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
 .ch-more-menu.open{display:block}
 .ch-more-menu .icon-btn{width:100%;justify-content:flex-start;gap:10px;padding:0 12px;font-size:14px}
 .ch-more-menu .icon-btn::after{content:attr(data-label)}
@@ -7664,8 +7667,9 @@ async function chDelMovie(id) { if (!confirm('Remove this movie from your journa
    const t=el.title||''; el.setAttribute('aria-label',t); el.setAttribute('role','button'); el.tabIndex=0;
    if(rare.includes(t)){el.dataset.label=t;menu.appendChild(el);}
   });
-  a.appendChild(more);a.appendChild(menu);
-  more.onclick=e=>{e.stopPropagation();menu.classList.toggle('open')};
+  a.prepend(more);document.body.appendChild(menu);
+  more.onclick=e=>{e.stopPropagation();const r=more.getBoundingClientRect();menu.style.top=(r.bottom+6)+'px';menu.style.right=Math.max(8,innerWidth-r.right)+'px';menu.classList.toggle('open')};
+  menu.addEventListener('click',()=>menu.classList.remove('open'));
   document.addEventListener('click',()=>menu.classList.remove('open'));
  }
  // surface verification failures persistently
