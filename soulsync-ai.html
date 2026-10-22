@@ -3735,6 +3735,76 @@
     .game-card-name { font-size: 13px; font-weight: 700; color: var(--ink); }
     .game-card-desc { font-size: 11px; color: var(--ink3); margin-top: 4px; line-height: 1.5; }
 
+    /* ── Couple Zone live games ── */
+    .game-card.cg-locked { opacity: .55; }
+    .games-grid .game-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .cg-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: var(--rad); font-size: 13px; animation: cgIn .35s ease both; }
+    .cg-banner.idle { background: var(--surf); color: var(--ink3); justify-content: center; text-align: center; }
+    .cg-banner.invite { background: var(--r-grad); color: #fff; box-shadow: 0 8px 22px rgba(255,62,108,.28); }
+    .cg-banner.live { background: linear-gradient(135deg, var(--p3), var(--r3)); color: var(--ink); border: 1px solid var(--border); }
+    .cg-b-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .cg-b-text span { font-size: 12px; opacity: .85; }
+    .cg-b-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .game-panel-inner.cg-sheet { background: linear-gradient(180deg, #fff 0%, #FFF5F8 100%); max-width: 420px; padding: 22px 18px 18px; }
+    .cg-sheet .gp-title { font-size: 19px; }
+    .cg-fade { animation: cgIn .35s ease both; }
+    @keyframes cgIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .cg-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 13px; }
+    .cg-pl { flex: 1; font-weight: 700; color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cg-pl.me { color: var(--r); } .cg-pl:last-child { text-align: right; }
+    .cg-score { padding: 4px 14px; border-radius: 50px; background: var(--r3); color: var(--r); font-weight: 800; white-space: nowrap; }
+    .cg-chip { display: table; margin: 4px auto 12px; padding: 6px 16px; border-radius: 50px; font-size: 12px; font-weight: 700; background: var(--surf); color: var(--ink3); }
+    .cg-chip.mine { background: var(--r-grad); color: #fff; animation: cgPulse 1.6s ease-in-out infinite; }
+    @keyframes cgPulse { 50% { box-shadow: 0 0 0 7px rgba(255,62,108,.14); } }
+    .cg-note { text-align: center; color: var(--ink3); font-size: 12px; margin: 10px 0 0; line-height: 1.5; }
+    .cg-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+    .cg-btn { padding: 11px 20px; border: none; border-radius: 50px; background: var(--r-grad); color: #fff; font-family: 'Figtree', sans-serif; font-size: 14px; font-weight: 700; cursor: none; transition: transform .15s, box-shadow .2s; box-shadow: 0 6px 16px rgba(255,62,108,.25); }
+    .cg-btn:hover:not(:disabled) { transform: translateY(-2px); } .cg-btn:active:not(:disabled) { transform: scale(.96); }
+    .cg-btn.alt { background: linear-gradient(135deg, #7C3AED, #A78BFA); box-shadow: 0 6px 16px rgba(124,58,237,.25); }
+    .cg-btn.ghost { background: var(--surf); color: var(--ink2); box-shadow: none; }
+    .cg-btn.sm { padding: 7px 12px; font-size: 12px; } .cg-banner.invite .cg-btn { background: #fff; color: var(--r); box-shadow: none; } .cg-banner.invite .cg-btn.ghost { background: rgba(255,255,255,.22); color: #fff; }
+    .cg-btn:disabled { opacity: .6; cursor: none; }
+    .cg-link { background: none; border: none; color: var(--ink3); font-size: 12px; font-weight: 600; cursor: none; padding: 6px 10px; }
+    .cg-link:hover { color: var(--r); }
+    .cg-center { text-align: center; padding: 6px 0; } .cg-center h4 { font-size: 20px; margin: 6px 0 2px; } .cg-center p { color: var(--ink3); font-size: 13px; margin: 6px 0; }
+    .cg-big { font-size: 52px; animation: cgFloat 2.4s ease-in-out infinite; }
+    @keyframes cgFloat { 50% { transform: translateY(-6px); } }
+    .cg-wait { text-align: center; color: var(--ink3); font-size: 13px; padding: 14px 0; }
+    .cg-dots i { display: inline-block; width: 6px; height: 6px; margin: 0 2px; border-radius: 50%; background: var(--r); animation: cgDot 1.2s infinite; } .cg-dots i:nth-child(2) { animation-delay: .2s; } .cg-dots i:nth-child(3) { animation-delay: .4s; }
+    @keyframes cgDot { 0%, 80%, 100% { opacity: .25; transform: scale(.8); } 40% { opacity: 1; transform: scale(1.2); } }
+    /* tic-tac-toe */
+    .cg-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 300px; margin: 0 auto; }
+    .cg-cell { aspect-ratio: 1; border: none; border-radius: 18px; background: #fff; box-shadow: inset 0 0 0 1.5px var(--border); font-size: 38px; font-weight: 800; cursor: none; transition: all .2s; }
+    .cg-cell:not(:disabled):hover { background: var(--r3); transform: scale(1.04); }
+    .cg-cell:disabled { cursor: none; } .cg-cell.filled { animation: cgPop .3s cubic-bezier(.34,1.56,.64,1); }
+    .cg-cell.X { color: var(--r); } .cg-cell.O { color: #7C3AED; } .cg-cell.win { background: var(--r-grad); color: #fff; box-shadow: 0 6px 18px rgba(255,62,108,.35); }
+    @keyframes cgPop { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+    /* truth or dare / know me */
+    .cg-card { border-radius: var(--rad); padding: 18px; margin: 10px 0; text-align: center; background: linear-gradient(135deg, var(--p3), var(--r3)); }
+    .cg-card.dare { background: linear-gradient(135deg, var(--r3), var(--o3)); }
+    .cg-kind { font-size: 11px; font-weight: 800; letter-spacing: 1px; color: var(--r); margin-bottom: 8px; } .cg-q { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.4; }
+    .cg-ans { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.75); font-size: 14px; color: var(--ink2); }
+    .cg-text { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: var(--rad-sm); font-family: 'Figtree', sans-serif; font-size: 14px; resize: none; outline: none; box-sizing: border-box; } .cg-text:focus { border-color: var(--r); }
+    .cg-opts { display: grid; gap: 8px; margin: 10px 0; }
+    .cg-opt { padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--border); background: #fff; font-family: 'Figtree', sans-serif; font-size: 14px; font-weight: 600; text-align: left; cursor: none; transition: all .2s; color: var(--ink); }
+    .cg-opt:not(:disabled):hover { border-color: var(--r); background: var(--r3); transform: translateX(3px); } .cg-opt:disabled { cursor: none; }
+    .cg-opt.you, .cg-opt.hit { border-color: #22C55E; background: #F0FDF4; } .cg-opt.miss { border-color: var(--r); background: var(--r3); }
+    .cg-verdict { text-align: center; font-size: 14px; font-weight: 700; padding: 8px; color: var(--ink2); } .cg-verdict.ok { color: #16A34A; }
+    /* memory */
+    .cg-mgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 320px; margin: 0 auto; }
+    .cg-mcard { aspect-ratio: 1; border: none; border-radius: 14px; position: relative; font-size: 28px; cursor: none; background: var(--r-grad); color: #fff; transition: transform .2s, background .3s; box-shadow: 0 4px 10px rgba(255,62,108,.2); }
+    .cg-mcard:disabled { cursor: none; } .cg-mcard .face { display: none; } .cg-mcard.open { background: #fff; box-shadow: inset 0 0 0 2px var(--r3); } .cg-mcard.open .back { display: none; } .cg-mcard.open .face { display: inline; }
+    .cg-mcard.pop { animation: cgFlip .45s ease; } .cg-mcard:not(:disabled):hover { transform: translateY(-3px); }
+    .cg-mcard.matched.mine { background: #FFF1F5; box-shadow: inset 0 0 0 2px var(--r); } .cg-mcard.matched.theirs { background: #F5F3FF; box-shadow: inset 0 0 0 2px #7C3AED; }
+    @keyframes cgFlip { 0% { transform: rotateY(90deg) scale(.9); } 100% { transform: none; } }
+    /* puzzle */
+    .cg-pz { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 290px; margin: 0 auto; }
+    .cg-tile { aspect-ratio: 1; border: none; border-radius: 16px; font-size: 30px; font-weight: 800; font-family: 'Figtree', sans-serif; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #fff, var(--r3)); color: var(--r); box-shadow: inset 0 0 0 1.5px var(--border); transition: all .2s; }
+    .cg-tile.movable { cursor: none; background: var(--r-grad); color: #fff; box-shadow: 0 6px 16px rgba(255,62,108,.3); } .cg-tile.movable:active { transform: scale(.94); } .cg-tile.blank { background: transparent; box-shadow: none; opacity: .35; } .cg-tile:disabled { cursor: none; }
+    .cg-result { margin-top: 16px; padding: 18px; text-align: center; border-radius: var(--rad); background: linear-gradient(135deg, var(--p3), var(--r3)); animation: cgPop .4s cubic-bezier(.34,1.56,.64,1); }
+    .cg-result h4 { font-size: 22px; margin: 0 0 4px; } .cg-result p { margin: 4px 0; font-size: 13px; color: var(--ink2); } .cg-pulse { color: var(--r) !important; font-weight: 700; }
+    @media (max-width: 600px) { .game-panel { align-items: flex-end; padding: 0; } .game-panel-inner.cg-sheet { max-width: none; border-radius: 26px 26px 0 0; max-height: 94vh; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); } }
+
     /* Game panel */
     .game-panel {
       position: fixed; inset: 0; z-index: 1500;
@@ -4203,7 +4273,7 @@
 
   <!-- GAME PANEL -->
   <div class="game-panel" id="gamePanel">
-    <div class="game-panel-inner">
+    <div class="game-panel-inner cg-sheet">
       <div class="gp-header">
         <div class="gp-title" id="gpTitle">Game</div>
         <button class="gp-close" onclick="closeGame()">✕</button>
@@ -4819,46 +4889,32 @@
               <button class="dc-btn" onclick="completeDailyChallenge()">Complete Challenge 🏆</button>
             </div>
             <div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-top:4px;">Games</div>
+            <div id="cgBanner"></div>
             <div class="games-grid">
-              <div class="game-card" onclick="playGame('thisorthat')">
-                <div class="game-card-icon">❤️</div>
-                <div class="game-card-name">This or That</div>
-                <div class="game-card-desc">Make choices together</div>
+              <div class="game-card" data-g="tictactoe" onclick="cgPick('tictactoe')">
+                <div class="game-card-icon">❌⭕</div>
+                <div class="game-card-name">Tic-Tac-Toe</div>
+                <div class="game-card-desc">Classic duel, live together</div>
               </div>
-              <div class="game-card" onclick="playGame('quiz')">
-                <div class="game-card-icon">💕</div>
-                <div class="game-card-name">Compatibility Quiz</div>
-                <div class="game-card-desc">How well do you match?</div>
-              </div>
-              <div class="game-card" onclick="playGame('truthdare')">
+              <div class="game-card" data-g="truthdare" onclick="cgPick('truthdare')">
                 <div class="game-card-icon">🎯</div>
                 <div class="game-card-name">Truth or Dare</div>
-                <div class="game-card-desc">Romantic & respectful</div>
+                <div class="game-card-desc">Sweet, playful & respectful</div>
               </div>
-              <div class="game-card" onclick="playGame('spinwheel')">
-                <div class="game-card-icon">🎲</div>
-                <div class="game-card-name">Spin the Wheel</div>
-                <div class="game-card-desc">Random fun moments</div>
+              <div class="game-card" data-g="knowme" onclick="cgPick('knowme')">
+                <div class="game-card-icon">💭</div>
+                <div class="game-card-name">How Well Do You Know Me?</div>
+                <div class="game-card-desc">Guess each other's answers</div>
               </div>
-              <div class="game-card" onclick="playGame('complete')">
-                <div class="game-card-icon">💌</div>
-                <div class="game-card-name">Complete the Sentence</div>
-                <div class="game-card-desc">Share hidden thoughts</div>
+              <div class="game-card" data-g="memory" onclick="cgPick('memory')">
+                <div class="game-card-icon">🃏</div>
+                <div class="game-card-name">Memory Match</div>
+                <div class="game-card-desc">Find the hidden pairs</div>
               </div>
-              <div class="game-card" onclick="playGame('emoji')">
+              <div class="game-card" data-g="puzzle" onclick="cgPick('puzzle')">
                 <div class="game-card-icon">🧩</div>
-                <div class="game-card-name">Emoji Guess Game</div>
-                <div class="game-card-desc">Decode the emojis</div>
-              </div>
-              <div class="game-card" onclick="playGame('song')">
-                <div class="game-card-icon">🎵</div>
-                <div class="game-card-name">Guess My Song</div>
-                <div class="game-card-desc">Music connection</div>
-              </div>
-              <div class="game-card" onclick="playGame('draw')">
-                <div class="game-card-icon">🎨</div>
-                <div class="game-card-name">Draw Together</div>
-                <div class="game-card-desc">Collaborative doodles</div>
+                <div class="game-card-name">Couple Puzzle Challenge</div>
+                <div class="game-card-desc">Solve it together, move by move</div>
               </div>
             </div>
 
@@ -6003,6 +6059,8 @@
           } else if (n.type === 'like') {
             const likerName = n.title.replace(' liked your profile!', '');
             addNotif({ icon: '💕', text: `<b>${likerName}</b> liked your profile!`, time: 'just now', unread: true, userId: n.actor_id });
+          } else if (n.type === 'game_invite' || n.type === 'game_declined') {
+            addNotif({ icon: '🎮', text: `<b>${escHtml(String(n.title || ''))}</b>${n.body ? '<br>' + escHtml(String(n.body)) : ''}`, time: 'just now', unread: true, userId: n.actor_id });
           } else if (n.type === 'connection_ended') {
             addNotif({ icon: '💔', text: 'A match has ended. That chat is now closed', time: 'just now', unread: true });
             if (n.actor_id) delete profileCache[n.actor_id];
@@ -6271,6 +6329,7 @@
         const rb = document.getElementById('revealBanner'); if (rb) rb.style.display = 'none';
         renderDailyChallenge();
         renderStreak();
+        try { cgSync(); } catch (e) { }
       }
     }
 
@@ -6508,221 +6567,280 @@
     /* ══════════════════════════════════════════
        COUPLE GAMES
     ══════════════════════════════════════════ */
-    const GAMES = {
-      thisorthat: {
-        title: '❤️ This or That',
-        questions: [
-          { q: 'Coffee ☕ or Tea 🍵?', opts: ['Coffee ☕','Tea 🍵'] },
-          { q: 'Beach 🏖️ or Mountains 🏔️?', opts: ['Beach 🏖️','Mountains 🏔️'] },
-          { q: 'Night 🌙 or Morning ☀️?', opts: ['Night 🌙','Morning ☀️'] },
-          { q: 'Movies 🎬 or Books 📚?', opts: ['Movies 🎬','Books 📚'] },
-          { q: 'Cat 🐱 or Dog 🐶?', opts: ['Cat 🐱','Dog 🐶'] },
-        ]
-      },
-      quiz: {
-        title: '💕 Compatibility Quiz',
-        questions: [
-          { q: 'Beach or Mountains?', opts: ['Beach 🏖️','Mountains 🏔️'] },
-          { q: 'Cats or Dogs?', opts: ['Cats 🐱','Dogs 🐶'] },
-          { q: 'Introvert or Extrovert?', opts: ['Introvert 🤫','Extrovert 🎉'] },
-          { q: 'Cook at home or eat out?', opts: ['Cook at home 🍳','Eat out 🍽️'] },
-          { q: 'Early bird or Night owl?', opts: ['Early bird 🌅','Night owl 🦉'] },
-        ]
-      },
-      truthdare: {
-        title: '🎯 Truth or Dare',
-        prompts: [
-          { type: 'Truth', text: 'What was your first impression of me?' },
-          { type: 'Dare', text: 'Send your favourite selfie.' },
-          { type: 'Truth', text: 'What do you find most attractive about someone?' },
-          { type: 'Dare', text: 'Describe me in 3 emojis.' },
-          { type: 'Truth', text: 'What\'s something you\'ve never told anyone?' },
-          { type: 'Dare', text: 'Share your most embarrassing music guilty pleasure.' },
-        ]
-      },
-      spinwheel: {
-        title: '🎲 Spin the Wheel',
-        categories: ['💌 Compliment','🧠 Memory','🤫 Secret','❓ Question','😄 Emoji Challenge','🎵 Song Recommendation']
-      },
-      complete: {
-        title: '💌 Complete the Sentence',
-        prompts: ['I feel happiest when ______','My perfect date would be ______','The thing that makes me laugh most is ______','My biggest dream is ______','When I\'m with you I feel ______']
-      },
-      emoji: {
-        title: '🧩 Emoji Guess Game',
-        rounds: [
-          { emojis: '❤️✈️🌍', answer: 'Traveling the world together' },
-          { emojis: '🎬🍿🌙', answer: 'Movie night' },
-          { emojis: '☕📖🌧️', answer: 'Rainy day with coffee and a book' },
-          { emojis: '🏖️🌅🥂', answer: 'Sunset beach date' },
-        ]
-      },
-      song: {
-        title: '🎵 Guess My Song',
-        rounds: [
-          { hint: 'Time after time... 🕰️❤️', answer: 'Time After Time - Cyndi Lauper' },
-          { hint: 'Perfect ⭐ in imperfect ways 💫', answer: 'Perfect - Ed Sheeran' },
-          { hint: 'A thousand years... 🕯️💕', answer: 'A Thousand Years - Christina Perri' },
-        ]
-      },
-      draw: {
-        title: '🎨 Draw Together',
-        isCanvas: true
-      }
+    /* Live two-player games. Server: couple_games.py (private room per pair, server-validated moves).
+       Sync uses polling like chat: 1.5s while a game is open, 3s otherwise. */
+    const CG_GAMES = {
+      tictactoe: { icon: '❌⭕', name: 'Tic-Tac-Toe', desc: 'A classic duel for two hearts' },
+      truthdare: { icon: '🎯', name: 'Truth or Dare', desc: 'Sweet, playful & respectful' },
+      knowme: { icon: '💭', name: 'How Well Do You Know Me?', desc: 'Guess each other\'s answers' },
+      memory: { icon: '🃏', name: 'Memory Match', desc: 'Find the hidden pairs' },
+      puzzle: { icon: '🧩', name: 'Couple Puzzle Challenge', desc: 'Solve it together, move by move' }
     };
-
-    let gameState = {};
-    function playGame(type) {
-      const g = GAMES[type];
-      if (!g) return;
-      gameState = { type, step: 0, answers: [], score: 0 };
-      document.getElementById('gpTitle').textContent = g.title;
-      renderGameContent(type);
-      document.getElementById('gamePanel').classList.add('open');
-      // Mark milestone
-      document.getElementById('ms-game').classList.add('done');
+    let CG = { room: null, busy: false, tick: 0, offset: 0, prevVis: [], prevId: null, resolveFor: null };
+    const cgEsc = s => escHtml(String(s == null ? '' : s));
+    function cgPartner() {
+      const c = String(S.activeChat || '');
+      return S.activeChatUserId && c && !c.startsWith('local_') ? S.activeChatUserId : null;
     }
-    function closeGame() { document.getElementById('gamePanel').classList.remove('open'); }
+    const cgOpen = () => document.getElementById('gamePanel').classList.contains('open');
+    const cgZoneVisible = () => document.getElementById('coupleZoneWrap').classList.contains('visible');
+    const cgFmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-    function renderGameContent(type) {
+    function cgSet(room, quiet) {
+      const prev = CG.room;
+      if (room && (room.status === 'declined' || room.status === 'cancelled')) {
+        if (prev && !quiet) toast(room.status === 'declined' ? `${cgEsc(room.partner_name)} can't play right now` : 'The invite was cancelled', 'info');
+        room = null;
+      }
+      CG.room = room;
+      if (room && room.now) CG.offset = room.now - Date.now() / 1000;
+      if (room && room.status === 'active') { const m = document.getElementById('ms-game'); if (m) m.classList.add('done'); }
+      if (room && room.state && room.state.next_id && room.state.next_id !== room.id) { cgJump(room.state.next_id); return; }
+      if (room && room.status === 'invited' && room.inviter_id !== room.you && (!prev || prev.id !== room.id)) {
+        toast(`💌 ${cgEsc(room.partner_name)} invited you to play ${CG_GAMES[room.game].name}`, 'info');
+        if (cgZoneVisible()) cgShow();
+      }
+      if (prev && prev.status === 'active' && room && room.state && room.state.left_by === room.partner_id && !(prev.state && prev.state.left_by)) toast(`${cgEsc(room.partner_name)} left the game`, 'info');
+      cgRenderZone();
+      if (cgOpen()) { if (room) cgRender(); else cgHide(); }
+    }
+    async function cgJump(id) {
+      const r = await apiFetch('couple-games/' + id);
+      if (r.success && r.data.game) cgSet(r.data.game, true);
+    }
+    async function cgSync() {
+      const pid = cgPartner(); if (!pid) { CG.room = null; cgRenderZone(); return; }
+      const r = await apiFetch(`couple-games/with/${pid}`);
+      if (r.success) cgSet(r.data.game, true); else cgRenderZone();
+    }
+    function cgRenderZone() {
+      const tab = document.getElementById('tab-zone');
+      const r = CG.room, pid = cgPartner();
+      if (tab) tab.textContent = '🎮 Couple Zone' + (r && r.status === 'invited' && r.inviter_id !== r.you && !cgZoneVisible() ? ' 💌' : '');
+      document.querySelectorAll('.game-card[data-g]').forEach(c => c.classList.toggle('cg-locked', !pid));
+      const el = document.getElementById('cgBanner'); if (!el) return;
+      let h = '';
+      if (!pid) h = `<div class="cg-banner idle">Open a chat with a connected match to play together 💞</div>`;
+      else if (r) {
+        const nm = cgEsc(r.partner_name), gm = CG_GAMES[r.game];
+        if (r.status === 'invited' && r.inviter_id !== r.you) h = `<div class="cg-banner invite"><div class="cg-b-text"><b>${nm} invited you to play</b><span>${gm.icon} ${gm.name}</span></div><div class="cg-b-actions"><button class="cg-btn sm" onclick="cgRespond('accept')">Join 💖</button><button class="cg-btn sm ghost" onclick="cgRespond('decline')">Not now</button></div></div>`;
+        else if (r.status === 'invited') h = `<div class="cg-banner live"><div class="cg-b-text"><b>Waiting for ${nm}…</b><span>${gm.icon} ${gm.name} invite sent</span></div><div class="cg-b-actions"><button class="cg-btn sm" onclick="cgShow()">Open</button><button class="cg-btn sm ghost" onclick="cgExit()">Cancel</button></div></div>`;
+        else h = `<div class="cg-banner live"><div class="cg-b-text"><b>${r.state.over ? 'Game finished' : 'Game in progress'} with ${nm}</b><span>${gm.icon} ${gm.name}</span></div><div class="cg-b-actions"><button class="cg-btn sm" onclick="cgShow()">${r.state.over ? 'Results' : 'Resume'}</button></div></div>`;
+      }
+      el.innerHTML = h;
+    }
+    function cgShow() { document.getElementById('gamePanel').classList.add('open'); cgRender(true); }
+    function cgHide() { document.getElementById('gamePanel').classList.remove('open'); }
+    function closeGame() {                      // header ✕: just minimise; an active game keeps running and can be resumed
+      cgHide();
+      if (CG.room && CG.room.status === 'finished') cgExit(true);
+    }
+
+    async function cgPick(game) {
+      const pid = cgPartner();
+      if (!pid) { toast('Open a chat with a connected match first 💞', 'warning'); return; }
+      if (CG.room) { cgShow(); toast('Finish or leave your current game first', 'info'); return; }
+      const r = await apiFetch(`couple-games/with/${pid}/invite`, 'POST', { game });
+      if (!r.success) { toast(cgEsc(r.error), 'warning'); cgSync(); return; }
+      cgSet(r.data, true); cgShow();
+    }
+    async function cgRespond(action) {
+      const r0 = CG.room; if (!r0) return;
+      const r = await apiFetch(`couple-games/${r0.id}/respond`, 'POST', { action });
+      if (!r.success) { toast(cgEsc(r.error), 'warning'); cgSync(); return; }
+      cgSet(r.data.game, true);
+      if (action === 'accept') cgShow(); else cgHide();
+    }
+    async function cgMove(payload, silent) {
+      const r0 = CG.room; if (!r0 || CG.busy) return;
+      CG.busy = true;
+      const r = await apiFetch(`couple-games/${r0.id}/move`, 'POST', payload);
+      CG.busy = false;
+      if (!r.success) {
+        if (!silent) toast(cgEsc(r.error), 'warning');
+        const g = await apiFetch('couple-games/' + r0.id);
+        if (g.success && g.data.game) cgSet(g.data.game, true);
+        return;
+      }
+      cgSet(r.data.game, true);
+    }
+    async function cgRematch() {
+      const r0 = CG.room; if (!r0) return;
+      const r = await apiFetch(`couple-games/${r0.id}/rematch`, 'POST', {});
+      if (!r.success) { toast(cgEsc(r.error), 'warning'); cgSync(); return; }
+      cgSet(r.data.game, true);
+    }
+    async function cgExit(silent) {
+      const r = CG.room;
+      if (!r) { cgHide(); return; }
+      if (silent !== true && r.status === 'active' && !r.state.over && !confirm('Leave this game? ' + r.partner_name + ' will be told you left.')) return;
+      await apiFetch(`couple-games/${r.id}/exit`, 'POST', {});
+      CG.room = null; cgHide(); cgRenderZone();
+    }
+
+    /* ── rendering ── */
+    function cgRender(force) {
+      const r = CG.room; if (!r) return;
+      const meta = CG_GAMES[r.game];
+      document.getElementById('gpTitle').textContent = meta.icon + ' ' + meta.name;
       const body = document.getElementById('gpBody');
-      const g = GAMES[type];
-      if (type === 'thisorthat' || type === 'quiz') {
-        const q = g.questions[gameState.step];
-        if (!q) { showQuizResult(); return; }
-        body.innerHTML = `<p style="color:var(--ink3);font-size:13px;margin-bottom:4px;">Question ${gameState.step+1} of ${g.questions.length}</p>
-          <div class="gp-question">${q.q}</div>
-          <div class="gp-options">${q.opts.map(o=>`<button class="gp-opt" onclick="answerGame('${o.replace(/'/g,"\\'")}',this)">${o}</button>`).join('')}</div>`;
-      } else if (type === 'truthdare') {
-        const random = g.prompts[Math.floor(Math.random()*g.prompts.length)];
-        body.innerHTML = `<div class="gp-question" style="background:linear-gradient(135deg,${random.type==='Truth'?'var(--p3),var(--r3)':'var(--r3),var(--o3)'});">
-          <div style="font-size:11px;font-weight:800;letter-spacing:1px;margin-bottom:8px;">${random.type==='Truth'?'💭 TRUTH':'🎯 DARE'}</div>
-          <div style="font-size:17px;">${random.text}</div>
-        </div>
-        <div class="gp-options">
-          <button class="gp-opt" onclick="renderGameContent('truthdare')">🔄 New Prompt</button>
-          <button class="gp-opt" onclick="sendGameToChat('${random.type}: ${random.text.replace(/'/g,"\\'")}')">💬 Send to Chat</button>
-        </div>`;
-      } else if (type === 'spinwheel') {
-        body.innerHTML = `<div style="text-align:center;padding:10px 0;">
-          <div id="wheelResult" style="font-size:32px;padding:24px;background:linear-gradient(135deg,var(--p3),var(--r3));border-radius:var(--rad);margin-bottom:16px;">🎲 Press Spin!</div>
-          <button class="btn-primary" onclick="spinWheel()">🎲 Spin!</button>
-        </div>`;
-      } else if (type === 'complete') {
-        const p = g.prompts[Math.floor(Math.random()*g.prompts.length)];
-        body.innerHTML = `<div class="gp-question">${p}</div>
-          <textarea id="completeSentence" rows="3" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:var(--rad-sm);font-family:'Figtree',sans-serif;font-size:14px;resize:none;outline:none;" placeholder="Finish the sentence..."></textarea>
-          <div class="gp-options" style="margin-top:12px;">
-            <button class="gp-opt" onclick="sendGameToChat(document.getElementById('completeSentence').value?'${p.replace(/'/g,"\\'")} '+document.getElementById('completeSentence').value:'...')">💬 Share Answer</button>
-            <button class="gp-opt" onclick="renderGameContent('complete')">🔄 New Prompt</button>
-          </div>`;
-      } else if (type === 'emoji') {
-        const r = g.rounds[gameState.step % g.rounds.length];
-        body.innerHTML = `<div class="gp-question" style="font-size:36px;">${r.emojis}</div>
-          <p style="color:var(--ink3);font-size:13px;text-align:center;margin-bottom:12px;">What phrase do these emojis represent?</p>
-          <textarea id="emojiGuess" rows="2" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:var(--rad-sm);font-family:'Figtree',sans-serif;font-size:14px;resize:none;outline:none;" placeholder="Your guess..."></textarea>
-          <div class="gp-options" style="margin-top:10px;">
-            <button class="gp-opt" onclick="revealEmojiAnswer('${r.answer.replace(/'/g,"\\'")}')">Reveal Answer 👁️</button>
-            <button class="gp-opt" onclick="gameState.step++;renderGameContent('emoji')">Next ➡️</button>
-          </div>`;
-      } else if (type === 'song') {
-        const r = g.rounds[gameState.step % g.rounds.length];
-        body.innerHTML = `<div class="gp-question">🎵 ${r.hint}</div>
-          <p style="color:var(--ink3);font-size:13px;text-align:center;margin-bottom:12px;">Guess the song!</p>
-          <textarea id="songGuess" rows="2" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:var(--rad-sm);font-family:'Figtree',sans-serif;font-size:14px;resize:none;outline:none;" placeholder="Song name..."></textarea>
-          <div class="gp-options" style="margin-top:10px;">
-            <button class="gp-opt" onclick="revealSongAnswer('${r.answer.replace(/'/g,"\\'")}')">Reveal 🎵</button>
-            <button class="gp-opt" onclick="gameState.step++;renderGameContent('song')">Next 🎵</button>
-          </div>`;
-      } else if (type === 'draw') {
-        body.innerHTML = `<p style="color:var(--ink3);font-size:13px;margin-bottom:10px;">Sketch something for your match! Send it when done.</p>
-          <canvas id="drawCanvas" width="380" height="240" style="border:2px dashed var(--border);border-radius:var(--rad);display:block;cursor:crosshair;touch-action:none;max-width:100%;"></canvas>
-          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-            <input type="color" id="drawColor" value="#FF3E6C" style="width:36px;height:36px;border:none;border-radius:8px;cursor:none;">
-            <input type="range" id="drawSize" min="2" max="20" value="5" style="flex:1;">
-            <button class="gp-opt" onclick="clearDrawCanvas()">🗑️ Clear</button>
-            <button class="gp-opt" onclick="sendDrawing()">💬 Send</button>
-          </div>`;
-        initDrawCanvas();
+      const key = r.id + ':' + r.version;
+      if (!force && body.dataset.k === key) return;
+      body.dataset.k = key;
+      const html = r.status === 'invited' ? cgInviteView(r) : cgHead(r) + cgView(r) + (r.state.over ? cgOver(r) : `<div class="cg-row"><button class="cg-link" onclick="cgExit()">🚪 Leave game</button></div>`);
+      body.innerHTML = `<div class="cg-fade">${html}</div>`;
+      if (r.game === 'memory') {
+        CG.prevId = r.id;
+        if (r.state.pending && CG.resolveFor !== key) { CG.resolveFor = key; setTimeout(() => { if (CG.room && CG.room.id === r.id) cgMove({ type: 'resolve' }, true); }, 1150); }
       }
     }
+    function cgInviteView(r) {
+      const gm = CG_GAMES[r.game], nm = cgEsc(r.partner_name), mine = r.inviter_id === r.you;
+      return `<div class="cg-center"><div class="cg-big">${gm.icon}</div><h4>${gm.name}</h4><p>${gm.desc}</p>
+        ${mine ? `<div class="cg-wait"><span class="cg-dots"><i></i><i></i><i></i></span> Waiting for ${nm} to join…</div>
+          <div class="cg-row"><button class="cg-btn ghost" onclick="cgExit(true)">Cancel invite</button></div>`
+          : `<p><b>${nm}</b> invited you to play 💌</p><div class="cg-row"><button class="cg-btn" onclick="cgRespond('accept')">Join 💖</button><button class="cg-btn ghost" onclick="cgRespond('decline')">Not now</button></div>`}</div>`;
+    }
+    function cgHead(r) {
+      const st = r.state, me = r.you, p = r.partner_id, w = st.series.wins || {};
+      let mid;
+      if (r.game === 'truthdare') mid = `💖 ${st.series.hearts || 0}`;
+      else if (r.game === 'puzzle') mid = st.series.best_moves ? `Best: ${st.series.best_moves} moves` : 'Team up!';
+      else mid = `<b>${w[me] || 0}</b> – <b>${w[p] || 0}</b>`;
+      return `<div class="cg-head"><span class="cg-pl me">You</span><span class="cg-score">${mid}</span><span class="cg-pl">${cgEsc(r.partner_name)}</span></div>`;
+    }
+    const cgChip = (r, text, mine) => `<div class="cg-chip ${mine ? 'mine' : ''}">${text}</div>`;
+    function cgTurnChip(r) {
+      const st = r.state; if (st.over) return '';
+      return st.turn === r.you ? cgChip(r, 'Your turn 💖', true) : cgChip(r, `Waiting for ${cgEsc(r.partner_name)}…`, false);
+    }
+    function cgView(r) {
+      return { tictactoe: cgTtt, truthdare: cgTd, knowme: cgKnow, memory: cgMem, puzzle: cgPz }[r.game](r);
+    }
 
-    function answerGame(answer, btn) {
-      btn.classList.add('selected');
-      document.querySelectorAll('.gp-opt').forEach(b => b.disabled = true);
-      gameState.answers.push(answer);
-      if (Math.random() > 0.4) gameState.score++;
-      setTimeout(() => { gameState.step++; renderGameContent(gameState.type); }, 600);
+    function cgTtt(r) {
+      const st = r.state, mine = st.turn === r.you && !st.over, line = (st.result && st.result.line) || [];
+      const cells = st.board.map((v, i) => `<button class="cg-cell ${v ? 'filled ' + v : ''} ${line.includes(i) ? 'win' : ''}" ${!v && mine ? '' : 'disabled'} onclick="cgMove({cell:${i}})">${v === 'X' ? '✕' : v === 'O' ? '◯' : ''}</button>`).join('');
+      return `${cgTurnChip(r)}<div class="cg-board">${cells}</div><p class="cg-note">You are <b>${st.marks[r.you] === 'X' ? '✕' : '◯'}</b></p>`;
     }
-    function showQuizResult() {
-      const total = GAMES[gameState.type].questions.length;
-      document.getElementById('gpBody').innerHTML = `
-        <div class="gp-result">
-          <div class="gp-result-score">${gameState.score}/${total} 💕</div>
-          <div class="gp-result-label">You matched on ${gameState.score} out of ${total} answers!</div>
-          <div style="margin-top:14px;font-size:24px;">${gameState.score >= total*0.7 ? '🎉 Great match!' : '💌 You complement each other'}</div>
-        </div>
-        <button class="btn-primary btn-full" style="margin-top:16px;" onclick="sendGameToChat('We scored ${gameState.score}/${total} on the compatibility quiz! 💕')">Share Result 💬</button>`;
+
+    function cgTd(r) {
+      const st = r.state, me = r.you, nm = cgEsc(r.partner_name), mineTurn = st.turn === me;
+      const who = mineTurn ? 'You' : nm;
+      let h = `<p class="cg-note">Round ${Math.min(st.round, st.total)} of ${st.total}</p>`;
+      if (st.over) return h;
+      if (st.phase === 'choose') {
+        h += mineTurn
+          ? `<div class="cg-card"><div class="cg-kind">YOUR TURN</div><div class="cg-q">Truth or dare?</div></div><div class="cg-row"><button class="cg-btn" onclick="cgMove({type:'choose',kind:'truth'})">💭 Truth</button><button class="cg-btn alt" onclick="cgMove({type:'choose',kind:'dare'})">🎯 Dare</button></div>`
+          : `<div class="cg-wait"><span class="cg-dots"><i></i><i></i><i></i></span> ${nm} is choosing truth or dare…</div>`;
+      } else {
+        const kind = st.kind === 'truth' ? '💭 TRUTH' : '🎯 DARE';
+        h += `<div class="cg-card ${st.kind}"><div class="cg-kind">${kind} · for ${who}</div><div class="cg-q">${cgEsc(st.prompt)}</div>${st.phase === 'react' ? `<div class="cg-ans">${st.skipped ? '⏭️ Skipped' : cgEsc(st.answer)}</div>` : ''}</div>`;
+        if (st.phase === 'answer') {
+          const left = st.max_skips - st.skips[me];
+          h += mineTurn
+            ? `<textarea id="cgTdText" class="cg-text" rows="3" maxlength="300" placeholder="${st.kind === 'truth' ? 'Your honest answer…' : 'Tell them how it went (optional)…'}"></textarea>
+               <div class="cg-row"><button class="cg-btn" onclick="cgMove({type:'answer',text:document.getElementById('cgTdText').value})">${st.kind === 'truth' ? 'Send answer 💌' : 'Done! ✅'}</button>${left > 0 ? `<button class="cg-btn ghost" onclick="cgMove({type:'answer',skip:true})">Skip (${left} left)</button>` : ''}</div>`
+            : `<div class="cg-wait"><span class="cg-dots"><i></i><i></i><i></i></span> Waiting for ${nm}…</div>`;
+        } else {
+          h += !mineTurn
+            ? `<div class="cg-row"><button class="cg-btn" onclick="cgMove({type:'react',heart:true})">💖 Love it</button><button class="cg-btn ghost" onclick="cgMove({type:'react',heart:false})">Next ➡️</button></div>`
+            : `<div class="cg-wait"><span class="cg-dots"><i></i><i></i><i></i></span> ${nm} is reacting…</div>`;
+        }
+      }
+      return h;
     }
-    function spinWheel() {
-      const cats = GAMES.spinwheel.categories;
-      const result = cats[Math.floor(Math.random()*cats.length)];
-      const el = document.getElementById('wheelResult');
-      el.style.transform = 'scale(0.8) rotate(10deg)';
-      setTimeout(() => { el.textContent = result; el.style.transform = ''; }, 200);
+
+    function cgKnow(r) {
+      const st = r.state, me = r.you, nm = cgEsc(r.partner_name), subjMe = st.subject === me;
+      if (st.over) return '';
+      const sub = subjMe ? 'you' : nm;
+      const rawq = subjMe ? st.question : st.question.replace(/\bAm I\b/g, 'Is ' + r.partner_name).replace(/\bdo I\b/g, 'does ' + r.partner_name).replace(/\bmy\b/gi, r.partner_name + '\'s').replace(/\bI\b/g, r.partner_name);
+      let h = `<p class="cg-note">Question ${st.round + 1} of ${st.total} · about <b>${sub}</b></p><div class="cg-card"><div class="cg-q">${cgEsc(rawq)}</div></div>`;
+      const opt = (o, i, cls, click) => `<button class="cg-opt ${cls}" ${click ? `onclick="${click}"` : 'disabled'}>${cgEsc(o)}</button>`;
+      let opts = '';
+      if (st.phase === 'answer') {
+        opts = subjMe ? st.options.map((o, i) => opt(o, i, '', `cgMove({type:'answer',choice:${i}})`)).join('') : '';
+        h += subjMe ? `<p class="cg-note">Pick YOUR real answer 💞</p><div class="cg-opts">${opts}</div>` : `<div class="cg-wait"><span class="cg-dots"><i></i><i></i><i></i></span> ${nm} is answering about themselves…</div>`;
+      } else if (st.phase === 'guess') {
+        h += subjMe
+          ? `<div class="cg-opts">${st.options.map((o, i) => opt(o, i, i === st.subject_answer ? 'you' : '', '')).join('')}</div><div class="cg-wait"><span class="cg-dots"><i></i><i></i><i></i></span> ${nm} is guessing…</div>`
+          : `<p class="cg-note">How would ${nm} answer?</p><div class="cg-opts">${st.options.map((o, i) => opt(o, i, '', `cgMove({type:'guess',choice:${i}})`)).join('')}</div>`;
+      } else {
+        const hit = st.guess === st.subject_answer;
+        h += `<div class="cg-opts">${st.options.map((o, i) => opt(o, i, (i === st.subject_answer ? 'hit ' : '') + (i === st.guess && !hit ? 'miss' : ''), '')).join('')}</div>
+          <div class="cg-verdict ${hit ? 'ok' : ''}">${hit ? '💘 A perfect match! +1' : `Not this time — the answer was “${cgEsc(st.options[st.subject_answer])}”`}</div>
+          <div class="cg-row"><button class="cg-btn" onclick="cgMove({type:'next'})">${st.round + 1 >= st.total ? 'See results 🏆' : 'Next question ➡️'}</button></div>`;
+      }
+      return h + `<p class="cg-note">Correct guesses — You: <b>${st.scores[me]}</b> · ${nm}: <b>${st.scores[r.partner_id]}</b></p>`;
     }
-    function revealEmojiAnswer(answer) { toast('Answer: ' + answer, 'info'); }
-    function revealSongAnswer(answer) { toast('🎵 ' + answer, 'info'); }
+
+    function cgMem(r) {
+      const st = r.state, me = r.you, mineTurn = st.turn === me && !st.over && !st.pending;
+      const vis = st.cards.map(c => c != null);
+      const cards = st.cards.map((c, i) => {
+        const m = st.matched[String(i)], open = c != null;
+        const pop = open && !(CG.prevId === r.id && CG.prevVis[i]) ? 'pop' : '';
+        return `<button class="cg-mcard ${open ? 'open' : ''} ${m ? 'matched ' + (m === me ? 'mine' : 'theirs') : ''} ${pop}" ${!open && mineTurn ? '' : 'disabled'} onclick="cgMove({idx:${i}})"><span class="back">💗</span><span class="face">${open ? c : ''}</span></button>`;
+      }).join('');
+      CG.prevVis = vis;
+      return `${cgTurnChip(r)}<div class="cg-mgrid">${cards}</div><p class="cg-note">Pairs — You: <b>${st.scores[me]}</b> · ${cgEsc(r.partner_name)}: <b>${st.scores[r.partner_id]}</b></p>`;
+    }
+
+    function cgPz(r) {
+      const st = r.state, mineTurn = st.turn === r.you && !st.over, blank = st.tiles.indexOf(0);
+      const near = i => Math.abs(Math.floor(i / 3) - Math.floor(blank / 3)) + Math.abs(i % 3 - blank % 3) === 1;
+      const tiles = st.tiles.map((t, i) => t === 0 ? `<div class="cg-tile blank">💖</div>` : `<button class="cg-tile ${mineTurn && near(i) ? 'movable' : ''}" ${mineTurn && near(i) ? '' : 'disabled'} onclick="cgMove({tile:${i}})">${t}</button>`).join('');
+      const secs = st.over && st.result ? st.result.seconds : Math.max(0, Date.now() / 1000 + CG.offset - st.started_at);
+      return `${cgTurnChip(r)}<div class="cg-pz">${tiles}</div><p class="cg-note">Moves: <b>${st.moves}</b> · Time: <b id="cgPzTime">${cgFmt(secs)}</b><br>Slide the tiles into order 1–8, taking turns.</p>`;
+    }
+
+    function cgOver(r) {
+      const st = r.state, me = r.you, p = r.partner_id, res = st.result || {}, nm = cgEsc(r.partner_name);
+      let head = '', sub = '', canRematch = true;
+      if (st.left_by) { head = st.left_by === me ? 'You left the game' : `${nm} left the game`; canRematch = false; }
+      else if (st.expired) { head = 'Game closed (inactive)'; canRematch = false; }
+      else if (r.game === 'puzzle') { head = '🎉 Solved together!'; sub = `${res.moves} moves in ${cgFmt(res.seconds || 0)}`; }
+      else if (r.game === 'truthdare') { head = '💞 What a lovely round'; sub = `You shared ${st.done[me]} · ${nm} shared ${st.done[p]} · 💖 ${st.hearts[me] + st.hearts[p]} hearts`; }
+      else if (res.winner === 'draw') head = '🤝 It\'s a draw!';
+      else head = res.winner === me ? '🎉 You won!' : `${nm} wins this one`;
+      if (r.game === 'knowme' && !st.left_by && !st.expired) sub = `You guessed ${st.scores[me]} · ${nm} guessed ${st.scores[p]} (out of ${st.total / 2})`;
+      if (r.game === 'memory' && !st.left_by && !st.expired) sub = `Pairs — You ${st.scores[me]} · ${nm} ${st.scores[p]}`;
+      const voted = (st.rematch || []).includes(me), theirs = (st.rematch || []).includes(p);
+      const btn = !canRematch ? '' : voted ? `<button class="cg-btn" disabled>Waiting for ${nm}…</button>`
+        : `<button class="cg-btn" onclick="cgRematch()">${theirs ? `🔁 Accept ${nm}'s rematch` : '🔁 Rematch'}</button>`;
+      return `<div class="cg-result"><h4>${head}</h4>${sub ? `<p>${sub}</p>` : ''}${theirs && !voted && canRematch ? `<p class="cg-pulse">${nm} wants a rematch!</p>` : ''}<div class="cg-row">${btn}<button class="cg-btn ghost" onclick="cgExit(true)">Back to Couple Zone</button></div></div>`;
+    }
+
+    /* ── polling ── */
+    setInterval(async () => {
+      try {
+        if (!S.user || document.hidden) return;
+        const pg = document.getElementById('page-chat');
+        if (!pg || !pg.classList.contains('active')) return;
+        const pid = cgPartner();
+        if (CG.room && (CG.room.partner_id !== pid)) { CG.room = null; cgHide(); cgRenderZone(); }
+        if (CG.busy) return;
+        if (CG.room) {
+          const r = await apiFetch(`couple-games/${CG.room.id}?v=${CG.room.version}`);
+          if (!r.success) { CG.room = null; cgHide(); cgRenderZone(); return; }
+          if (!r.data.unchanged) cgSet(r.data.game);
+        } else if (pid && (cgOpen() || ++CG.tick % 2 === 0)) {
+          await cgSync();
+        }
+      } catch (e) { }
+    }, 1500);
+    setInterval(() => {           // live puzzle clock
+      const el = document.getElementById('cgPzTime'), r = CG.room;
+      if (el && r && r.game === 'puzzle' && !r.state.over) el.textContent = cgFmt(Math.max(0, Date.now() / 1000 + CG.offset - r.state.started_at));
+    }, 1000);
+
     function sendGameToChat(text) {
       const ta = document.getElementById('chatInput');
       ta.value = '🎮 ' + text;
-      closeGame();
+      cgHide();
       switchChatTab('chat');
       sendMsg();
-    }
-
-    // Draw canvas
-    function initDrawCanvas() {
-      const canvas = document.getElementById('drawCanvas');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-      let drawing = false;
-      const getPos = e => {
-        const r = canvas.getBoundingClientRect();
-        const src = e.touches ? e.touches[0] : e;
-        return { x: src.clientX - r.left, y: src.clientY - r.top };
-      };
-      const start = e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); e.preventDefault(); };
-      const draw = e => {
-        if (!drawing) return;
-        const p = getPos(e);
-        ctx.lineWidth = document.getElementById('drawSize').value;
-        ctx.strokeStyle = document.getElementById('drawColor').value;
-        ctx.lineCap = 'round';
-        ctx.lineTo(p.x,p.y); ctx.stroke();
-        e.preventDefault();
-      };
-      const stop = () => drawing = false;
-      canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw);
-      canvas.addEventListener('mouseup', stop); canvas.addEventListener('mouseleave', stop);
-      canvas.addEventListener('touchstart', start, {passive:false}); canvas.addEventListener('touchmove', draw, {passive:false});
-      canvas.addEventListener('touchend', stop);
-    }
-    function clearDrawCanvas() {
-      const c = document.getElementById('drawCanvas'); if (!c) return;
-      const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
-    }
-    function sendDrawing() {
-      const c = document.getElementById('drawCanvas'); if (!c) return;
-      const url = c.toDataURL();
-      const msgsWrap = document.getElementById('msgsWrap');
-      const div = document.createElement('div');
-      div.className = 'msg msg-out';
-      div.innerHTML = `<div class="msg-bubble"><img src="${url}" style="max-width:200px;border-radius:8px;display:block;"></div>`;
-      msgsWrap.appendChild(div); msgsWrap.scrollTop = msgsWrap.scrollHeight;
-      closeGame(); switchChatTab('chat');
-      toast('🎨 Drawing sent!', 'success');
     }
 
     /* ══════════════════════════════════════════

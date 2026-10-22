@@ -2996,6 +2996,9 @@ def favicon():
 import challenge
 challenge.register(app, globals())      # 21-day challenge, movie journal, exclusive pairing (see challenge.py)
 
+import couple_games
+couple_games.register(app, globals())   # Couple Zone private game rooms (see couple_games.py)
+
 
 if __name__ == "__main__":
     app.run(debug=os.environ.get("FLASK_DEBUG") == "1", port=5000, host="0.0.0.0", threaded=False)  # debug OFF unless FLASK_DEBUG=1
