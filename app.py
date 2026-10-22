@@ -22,6 +22,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)   # Render sits behind one proxy: use the real client IP for rate limits
+app.config["MAX_CONTENT_LENGTH"] = 12 * 1024 * 1024   # reject oversized uploads early
+
+
+@app.after_request
+def _security_headers(resp):
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    return resp
 CORS_ORIGINS = [o.strip() for o in os.environ.get("CORS_ORIGINS", "http://localhost:5000,http://127.0.0.1:5000").split(",") if o.strip()]
 CORS(app, origins=CORS_ORIGINS)   # explicit origins only (Bearer-token auth, no cookies)
 
@@ -116,6 +127,9 @@ def _rate_limit(n, per):
             if len(hits) >= n:
                 return err("Too many attempts — try again later", 429)
             _RL[key] = hits + [now]
+            if len(_RL) > 5000:   # prune stale keys so memory can't grow without bound
+                for k in [k for k, v in _RL.items() if not v or now - v[-1] > 3600]:
+                    _RL.pop(k, None)
             return f(*a, **k)
         return w
     return deco
@@ -1003,15 +1017,19 @@ def get_messages(user_id, convo_id):
 
 @app.route("/api/conversations/<convo_id>/messages", methods=["POST"])
 @require_auth
+@_rate_limit(60, 60)
 def send_message(user_id, convo_id):
     """
     POST /api/conversations/<id>/messages
     Body: { content, type }   type: text | voice_note | emoji
     """
-    d = request.json or {}
-    content = d.get("content", "").strip()
+    d = request.get_json(silent=True) or {}
+    content = d.get("content", "")
+    content = content.strip() if isinstance(content, str) else ""
     if not content:
         return err("Message content required")
+    if d.get("type", "text") not in ("text", "voice_note", "emoji"):
+        return err("Invalid message type")
 
     # Verify user is part of conversation
     if len(content) > 2000:
@@ -2171,6 +2189,7 @@ def verification_status(user_id):
 
 @app.route("/api/verification/photo", methods=["POST"])
 @require_auth
+@_rate_limit(8, 60)
 def submit_photo_verification(user_id):
     """multipart: selfie=<file>, challenge=<text the user performed>. Goes to PENDING for human review."""
     pend = supabase.table("verification_requests").select("id").eq("user_id", user_id).eq("kind", "photo").eq("status", "pending").execute().data
@@ -2216,6 +2235,7 @@ def voice_prompt(user_id):
 
 @app.route("/api/verification/voice", methods=["POST"])
 @require_auth
+@_rate_limit(8, 60)
 def submit_voice_verification(user_id):
     """multipart: audio=<file>, nonce=<from prompt>. Single-use nonce prevents replay. Goes to PENDING review."""
     nonce = request.form.get("nonce", "")
