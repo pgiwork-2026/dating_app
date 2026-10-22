@@ -6920,9 +6920,9 @@ async function loadHub() {
   const names = {}; (mm.success ? mm.data : []).forEach(m => names[m.id] = m.first_name || m.name);
   let h = '';
   // Streak
-  h += hSec('🔥 Streak', st.success ? `<p><b>Day ${st.data.current_streak} of 21</b></p><div class="pbar"><i style="width:${Math.min(100,st.data.current_streak/21*100)}%"></i></div><p>${st.data.current_streak}-day streak · best ${st.data.longest_streak}${st.data.next_milestone ? ' · next milestone: ' + st.data.next_milestone + ' days' : ''}</p>
-    <p style="font-size:12px;color:var(--ink3)">Send a message or like a profile today, then count it.</p>
-    <div class="hub-row"><button class="btn-primary" onclick="hubCheckin()">Count today's activity</button></div>` : hErr(st));
+  h += hSec('🔥 Streak', st.success ? `<p style="font-size:22px"><b>🔥 ${st.data.current_streak}</b> day${st.data.current_streak === 1 ? '' : 's'} in a row</p><div class="pbar"><i style="width:${st.data.next_milestone ? Math.min(100, st.data.current_streak / st.data.next_milestone * 100) : 100}%"></i></div><p>${st.data.last_active_date === new Date().toISOString().slice(0, 10) ? '✓ Today is counted' : 'Like or chat today to keep it going'} · best ${st.data.longest_streak}${st.data.next_milestone ? ' · next milestone: ' + st.data.next_milestone + ' days' : ''}</p>
+    <p style="font-size:12px;color:var(--ink3)">Chat or like someone every day to grow your streak. Miss a day and it starts over.</p>
+    <p class="hub-auto" style="font-size:13px;color:#15803d">✓ Counted automatically when you like a profile or send a message.</p>` : hErr(st));
   h += hSec('📋 Profile screening', `<p>Status: <b>${pme.success && pme.data.user && pme.data.user.screening_complete ? 'complete' : 'incomplete'}</b></p><div class="hub-row"><button class="btn-outline" onclick="showPage('screening')">Review / update answers</button></div>`);
   h += hSec('🏁 21-day challenge', `<p>Status: <b>${pme.success && pme.data.user && pme.data.user.challenge_complete ? 'complete — eligible for matches' : 'in progress'}</b></p><div class="hub-row"><button class="btn-primary" onclick="showPage('challenge')">Open challenge &amp; movie journal</button></div>`);
   // Avatar

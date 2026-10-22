@@ -874,6 +874,7 @@ def like_user(user_id):
                 "created_at":   datetime.now(timezone.utc).isoformat(),
             }).execute()
 
+    _auto_credit_streak(user_id)
     liked_user = supabase.table("users").select("first_name, last_name").eq("id", liked_id).execute().data
     liked_name = f"{liked_user[0]['first_name']} {liked_user[0]['last_name']}" if liked_user else "them"
     return ok({"is_mutual": is_mutual, "mutual": is_mutual, "name": liked_name}, "Match!" if is_mutual else "Like sent")
@@ -1064,6 +1065,7 @@ def send_message(user_id, convo_id):
         app.logger.exception("message notification failed")
     _closeness_touch(user_id, _rows[0]["user2_id"] if _rows[0]["user1_id"] == user_id else _rows[0]["user1_id"])
 
+    _auto_credit_streak(user_id)
     return ok(msg, "Message sent", 201)
 
 
@@ -1937,7 +1939,7 @@ AUDIO_TYPES = {"audio/webm", "audio/ogg", "audio/wav", "audio/mpeg", "audio/mp4"
 ANIMAL_AVATARS = ["fox", "wolf", "owl", "panda", "cat", "dog", "rabbit", "bear", "deer", "dolphin", "lion", "penguin"]
 VOICE_PHRASES = ["blue river morning", "silver lantern garden", "quiet mountain sunrise",
                  "golden harvest moon", "gentle thunder rain", "paper boat journey"]
-STREAK_MILESTONES = [3, 7, 14, 30, 60, 100]
+STREAK_MILESTONES = [3, 7, 14, 21, 30, 50, 60, 100, 150, 200, 365, 500, 730, 1000]
 
 # Documented, configurable compatibility weights (must sum to 100)
 COMPAT_WEIGHTS = {"goals": 30, "values": 25, "interests": 20, "personality": 15, "expectations": 10}
@@ -2152,9 +2154,29 @@ def get_streak(user_id):
     if s["last_active_date"] and s["last_active_date"] < (_now().date() - timedelta(days=1)).isoformat():
         cur = 0
     nxt = next((m for m in STREAK_MILESTONES if m > cur), None)
+    if nxt is None:
+        nxt = (cur // 500 + 1) * 500   # past the last listed milestone: keep going in steps of 500
     return ok({"current_streak": cur, "longest_streak": s["longest_streak"],
                "last_active_date": s["last_active_date"], "next_milestone": nxt,
                "milestones": STREAK_MILESTONES})
+
+
+def _auto_credit_streak(user_id):
+    """Called after a real like or message: credits today's streak once. Never breaks the caller."""
+    try:
+        today = _now().date()
+        r = supabase.table("user_streaks").select("*").eq("user_id", user_id).execute().data
+        if r and r[0]["last_active_date"] == today.isoformat():
+            return
+        prev = r[0] if r else None
+        cur = (prev["current_streak"] + 1) if prev and prev["last_active_date"] == (today - timedelta(days=1)).isoformat() else 1
+        supabase.table("user_streaks").upsert({"user_id": user_id, "current_streak": cur,
+            "longest_streak": max(cur, prev["longest_streak"] if prev else 0),
+            "last_active_date": today.isoformat(), "updated_at": _iso()}, on_conflict="user_id").execute()
+        if cur in STREAK_MILESTONES:
+            _notify(user_id, user_id, "streak", f"🔥 {cur}-day streak milestone!")
+    except Exception:
+        app.logger.warning("auto streak credit failed", exc_info=True)
 
 
 @app.route("/api/streak/checkin", methods=["POST"])
