@@ -4780,7 +4780,7 @@
             <button class="chat-tab" id="tab-zone" onclick="switchChatTab('zone')">🎮 Couple Zone</button>
           </div>
 
-          <div class="phase-strip phase-anon" id="phaseBanner">🎭 Phase 1 · Anonymous Chat</div>
+          <div class="phase-strip phase-anon" id="phaseBanner">🎭 Phase 1 · Anonymous Chat <small class="ph-next">Photos unlock as you chat</small></div>
 
           <!-- MOOD BAR -->
           <div class="mood-bar" id="moodBar">
@@ -5117,18 +5117,38 @@
 
     // ══════════ NOTIFICATIONS ══════════
     let notifications = [];
+    function fmtMsgTime(t) {
+      const d = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(t) ? t : String(t).replace(' ', 'T') + 'Z');
+      if (isNaN(d)) return '';
+      const tm = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return d.toDateString() === new Date().toDateString() ? tm : d.toLocaleDateString([], { day: 'numeric', month: 'short' }) + ', ' + tm;
+    }
+    function timeAgo(t) {
+      if (!t) return '';
+      let d = typeof t === 'number' ? new Date(t) : new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(t) ? t : String(t).replace(' ', 'T') + 'Z');
+      if (isNaN(d)) return '';
+      const s = Math.max(0, (Date.now() - d.getTime()) / 1000);
+      if (s < 60) return 'just now';
+      if (s < 3600) return Math.floor(s / 60) + ' min ago';
+      if (s < 86400) return Math.floor(s / 3600) + ' hr ago';
+      if (s < 172800) return 'yesterday';
+      if (s < 604800) return Math.floor(s / 86400) + ' days ago';
+      return d.toLocaleDateString();
+    }
     function addNotif(n) {
+      n.ts = n.ts || (window._curN && window._curN.created_at) || Date.now();
       notifications.unshift({ id: Date.now() + Math.random(), ...n }); renderNotifList(); updateBadges();
       try { if (window.Notification && Notification.permission === 'granted' && document.hidden) new Notification('SoulSync', { body: String(n.text || '').replace(/<[^>]+>/g, '') }); } catch (e) { }
     }
     document.addEventListener('click', () => { try { if (window.Notification && Notification.permission === 'default' && S.user) Notification.requestPermission(); } catch (e) { } });
+    setInterval(() => { try { renderNotifList(); } catch (e) { } }, 60000);
     function renderNotifList() {
       const el = document.getElementById('notifList');
       if (!notifications.length) { el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink3);font-size:13px;">No notifications</div>'; return; }
       el.innerHTML = notifications.map((n, i) => `
     <div class="notif-item ${n.unread ? 'unread' : ''}" onclick="notifClickAt(${i})">
       <div class="notif-item-icon">${n.icon}</div>
-      <div class="notif-item-body"><p>${n.text}</p><span>${n.time}</span>${n.actions || ''}</div>
+      <div class="notif-item-body"><p>${n.text}</p><span>${n.ts ? timeAgo(n.ts) : n.time}</span>${n.actions || ''}</div>
     </div>`).join('');
     }
     function notifClickAt(i) {
@@ -5340,13 +5360,13 @@
 
     async function renderDiscover(f = 'all') {
       const grid = document.getElementById('matchesGrid');
-      grid.innerHTML = '<div style="grid-column:1/-1;padding:60px;text-align:center;color:var(--ink3)">🔍 Loading matches...</div>';
+      grid.innerHTML = '<div class="sk-card"><i></i><b></b><b></b></div>'.repeat(3);
       const data = await apiFetch('matches?filter=' + f);
       if (!data.success || !data.data || data.data.length === 0) {
         grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
       <div class="es-icon">💫</div>
       <h3>${data.success && /verify|screening/i.test(data.message || '') ? data.message : 'No matches yet'}</h3>
-      <p>Be among the first to join! As more users sign up, you'll see their profiles here.<br>Invite friends to get your first matches.</p>
+      <p>Profiles appear here once you and they have both finished screening, the 21-day challenge and photo + voice verification.</p><div class="hub-row" style="justify-content:center"><button class="btn-primary" onclick="showPage('challenge')">Open challenge</button><button class="btn-outline" onclick="showPage('profile')">Verify profile</button></div>
     </div>`;
         return;
       }
@@ -5450,7 +5470,7 @@
         </div>
       </div>`;
         } else {
-          const cid = item.id; const name = item.other_name || 'Match'; const lastMsg = item.last_message || 'Say hello!'; const lastTime = item.last_time ? new Date(item.last_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+          const cid = item.id; const name = item.other_name || 'Match'; const lastMsg = item.last_message || 'Say hello!'; const lastTime = item.last_time ? fmtMsgTime(item.last_time) : '';
           return `<div class="mm-card" onclick="openChatByConvoId('${cid}')">
         <div class="mm-avatar">${name[0].toUpperCase()}</div>
         <div class="mm-info"><h3>${name}</h3><p>${lastMsg.substring(0, 60)}</p></div>
@@ -5630,7 +5650,7 @@
       }
       data.data.forEach(c => { S.convoUsers[c.id] = { userId: c.other_user_id, name: c.other_name || 'Match' }; });
       list.innerHTML = data.data.map(c => {
-        const lastTime = c.last_time ? new Date(c.last_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+        const lastTime = c.last_time ? fmtMsgTime(c.last_time) : '';
         const active = S.activeChat === c.id;
         return `<div class="chat-item ${active ? 'active' : ''}" onclick="openChatByConvoId('${c.id}')">
       <div class="ci-avatar" style="background:var(--r-grad);color:#fff;font-weight:800;">${(c.other_name || 'M')[0].toUpperCase()}<div class="ci-online"></div></div>
@@ -5740,7 +5760,7 @@
       const atBottom = w.scrollHeight - w.scrollTop - w.clientHeight < 80;
       w.innerHTML = msgs.map(m => {
         const isMine = m.sender_id === myId || m.sender_id == myId;
-        const time = m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+        const time = m.created_at ? fmtMsgTime(m.created_at) : '';
         return `<div class="msg ${isMine ? 'sent' : 'recv'}"><div class="msg-bubble">${escHtml(m.content || m.text || '')}</div><div class="msg-time">${time}${isMine ? ' ✓' : ''}</div></div>`;
       }).join('');
       if (atBottom || !silent) w.scrollTop = w.scrollHeight;
@@ -5958,7 +5978,7 @@
       const notifs = data.data;
       for (const n of notifs) {
         if (!n.is_read && !_seenNotif.has(n.id)) {
-          _seenNotif.add(n.id);
+          _seenNotif.add(n.id); window._curN = n;
           if (n.type === 'match') {
             const matchName = n.title.replace("It's a Match! You and ", "").replace(/ liked each other 🎉.*/, '');
             addNotif({ icon: '🎉', text: `<b>It's a Match!</b> You and <b>${matchName}</b> liked each other!`, time: 'just now', unread: true, userId: n.actor_id });
@@ -6893,7 +6913,7 @@ async function loadHub() {
   const names = {}; (mm.success ? mm.data : []).forEach(m => names[m.id] = m.first_name || m.name);
   let h = '';
   // Streak
-  h += hSec('🔥 Streak', st.success ? `<p>${st.data.current_streak}-day streak · best ${st.data.longest_streak}${st.data.next_milestone ? ' · next milestone: ' + st.data.next_milestone + ' days' : ''}</p>
+  h += hSec('🔥 Streak', st.success ? `<p><b>Day ${st.data.current_streak} of 21</b></p><div class="pbar"><i style="width:${Math.min(100,st.data.current_streak/21*100)}%"></i></div><p>${st.data.current_streak}-day streak · best ${st.data.longest_streak}${st.data.next_milestone ? ' · next milestone: ' + st.data.next_milestone + ' days' : ''}</p>
     <p style="font-size:12px;color:var(--ink3)">Send a message or like a profile today, then count it.</p>
     <div class="hub-row"><button class="btn-primary" onclick="hubCheckin()">Count today's activity</button></div>` : hErr(st));
   h += hSec('📋 Profile screening', `<p>Status: <b>${pme.success && pme.data.user && pme.data.user.screening_complete ? 'complete' : 'incomplete'}</b></p><div class="hub-row"><button class="btn-outline" onclick="showPage('screening')">Review / update answers</button></div>`);
@@ -6903,7 +6923,7 @@ async function loadHub() {
   h += hSec('🐾 Animal avatar', `<div class="hub-row">${Object.keys(ANIMALS).map(k => `<span class="hub-av ${k === cur ? 'sel' : ''}" title="${k}" onclick="hubSetAvatar('${k}')">${ANIMALS[k]}</span>`).join('')}</div>`);
   // Verification
   const vs = ver.success ? ver.data.status : null;
-  h += hSec('✅ Verification', ver.success ? `<p>Photo: <b>${hE(vs)}</b> · Voice: <b>${ver.data.voice_verified ? 'verified' : 'not verified'}</b></p>
+  h += hSec('✅ Verification', ver.success ? `<div class="vsteps"><div class="vstep ${vs==='verified'?'ok':''}"><span>📸 Photo</span><em>${vs==='verified'?'✓ Verified':hE(vs||'Pending')}</em></div><div class="vstep ${ver.data.voice_verified?'ok':''}"><span>🎙️ Voice</span><em>${ver.data.voice_verified?'✓ Verified':'Not verified'}</em></div></div><div id="vMsg" class="vmsg"></div>
     <p style="font-size:12px;color:var(--ink3)">Photos and recordings are private and checked automatically by AI.</p>
     <p style="margin-top:10px"><b>Photo:</b> <span id="vChal">${hE(PHOTO_CHALLENGES[Math.floor(Math.random() * PHOTO_CHALLENGES.length)])}</span> while taking your selfie</p>
     <div class="hub-row"><input type="file" id="vPhoto" accept="image/*" capture="user" class="hub-in"><button class="btn-outline" onclick="hubSubmitPhoto()">Submit selfie</button></div>
@@ -7577,6 +7597,85 @@ async function chAddMovie() {
   toast('Logged', 'success'); ['mt', 'ml', 'mv'].forEach(k => delete _chDraft[k]); CH.pick.mgenres = []; loadChallenge();
 }
 async function chDelMovie(id) { if (!confirm('Remove this movie from your journal?')) return; const d = await apiFetch('movies/' + id, 'DELETE'); if (!d.success) { toast(d.error, 'error'); return; } loadChallenge(); }
+</script>
+
+<style id="ui-enhance">
+/* tap targets + contrast */
+.icon-btn,.mob-nav-item,.ma-like,.ma-chat,.ma-call,.chat-tab{min-height:44px}
+.icon-btn{min-width:44px;display:flex;align-items:center;justify-content:center}
+.mcard-meta,.ch-status,.ph-next{color:#4b5563}
+/* discover cards: Like primary, others secondary */
+.ma-like{background:var(--r-grad);color:#fff;font-weight:700;flex:1.4}
+.ma-like.liked{background:#fff3cd;color:#8a6d00}
+.ma-chat,.ma-call{background:transparent;border:1px solid var(--border);color:var(--ink2,#374151);font-weight:600}
+.mc-lock{font-size:11px;color:#6b7280;text-align:center;margin:6px 0 0}
+.mc-bar{height:5px;border-radius:99px;background:#f3d1dc;margin:8px 0 2px;overflow:hidden}
+.mc-bar i{display:block;height:100%;background:var(--r-grad)}
+/* skeleton */
+.sk-card{border-radius:20px;background:#fff;padding:14px;min-height:260px;box-shadow:0 1px 0 var(--border)}
+.sk-card i,.sk-card b{display:block;border-radius:12px;background:linear-gradient(90deg,#eee 25%,#f7f7f7 50%,#eee 75%);background-size:200% 100%;animation:skl 1.2s infinite}
+.sk-card i{height:150px}.sk-card b{height:14px;margin-top:12px;width:70%}.sk-card b+b{width:45%}
+@keyframes skl{to{background-position:-200% 0}}
+/* header more-menu */
+.ch-actions{position:relative}
+.ch-more-menu{display:none;position:absolute;right:0;top:100%;z-index:50;background:#fff;border:1px solid var(--border);border-radius:14px;padding:6px;min-width:190px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.ch-more-menu.open{display:block}
+.ch-more-menu .icon-btn{width:100%;justify-content:flex-start;gap:10px;padding:0 12px;font-size:14px}
+.ch-more-menu .icon-btn::after{content:attr(data-label)}
+/* progress + verification */
+.pbar{height:8px;border-radius:99px;background:#f3d1dc;overflow:hidden;margin:6px 0 10px}
+.pbar i{display:block;height:100%;background:var(--r-grad)}
+.vsteps{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.vstep{border:1px solid var(--border);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.vstep em{font-style:normal;font-size:12px;font-weight:700;color:#b45309}
+.vstep.ok{border-color:#86efac;background:#f0fdf4}.vstep.ok em{color:#15803d}
+.vmsg{font-size:13px;color:#b91c1c;min-height:0;margin-bottom:6px}
+.vmsg:not(:empty){padding:8px 10px;background:#fef2f2;border-radius:10px}
+.ph-next{margin-left:8px;font-weight:500;opacity:.85}
+/* bottom nav on phones */
+@media (max-width:900px){
+ body.logged-in:not([data-page="screening"]) .mobile-nav{display:flex !important;position:fixed;bottom:0;left:0;right:0;z-index:900;background:#fff}
+ body.logged-in:not([data-page="screening"]) #navLinks{display:none !important}
+ body.logged-in{padding-bottom:70px}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}.tap-ripple{display:none}}
+</style>
+
+<script id="ui-enhance-js">
+(function(){
+ // discover card extras
+ const grid=document.getElementById('matchesGrid');
+ function enhanceCards(){
+  document.querySelectorAll('#matchesGrid .mcard:not([data-enh])').forEach(c=>{
+   c.dataset.enh=1;
+   const b=c.querySelector('.mcard-badge'), m=b&&b.textContent.match(/(\d+)/), body=c.querySelector('.mcard-tags');
+   if(m&&body){const bar=document.createElement('div');bar.className='mc-bar';bar.innerHTML='<i style="width:'+m[1]+'%"></i>';body.before(bar);}
+   if(c.textContent.includes('🔒')&&body){const n=document.createElement('div');n.className='mc-lock';n.textContent='🔒 Photo unlocks as you chat';body.after(n);}
+  });
+ }
+ if(grid) new MutationObserver(enhanceCards).observe(grid,{childList:true});
+ // chat header: group rarely used actions in a ⋯ menu
+ function groupActions(){
+  const a=document.querySelector('.ch-actions'); if(!a||a.dataset.grp) return; a.dataset.grp=1;
+  const menu=document.createElement('div');menu.className='ch-more-menu';
+  const more=document.createElement('div');more.className='icon-btn';more.textContent='⋯';more.title='More';
+  const rare=['Report','Block','Match Insights','Date Planner','Compatibility','End match'];
+  [...a.querySelectorAll('.icon-btn')].forEach(el=>{
+   const t=el.title||''; el.setAttribute('aria-label',t); el.setAttribute('role','button'); el.tabIndex=0;
+   if(rare.includes(t)){el.dataset.label=t;menu.appendChild(el);}
+  });
+  a.appendChild(more);a.appendChild(menu);
+  more.onclick=e=>{e.stopPropagation();menu.classList.toggle('open')};
+  document.addEventListener('click',()=>menu.classList.remove('open'));
+ }
+ // surface verification failures persistently
+ const t0=window.toast;
+ if(typeof t0==='function') window.toast=function(msg,type){
+  const v=document.getElementById('vMsg'); if(v&&type==='error'&&/selfie|verif|voice|phrase|photo/i.test(msg)) v.textContent=msg;
+  return t0.apply(this,arguments);
+ };
+ document.addEventListener('DOMContentLoaded',groupActions); groupActions(); enhanceCards();
+})();
 </script>
 </body>
 </html>
