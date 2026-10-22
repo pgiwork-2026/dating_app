@@ -285,3 +285,22 @@ def test_dev_skip_is_off_by_default_and_works_when_enabled(env, monkeypatch):
     monkeypatch.setenv("DEV_SKIP_CHALLENGE", "1")
     assert J(c, "post", "/api/dev/challenge/complete", H(m, "u1")).status_code == 200
     assert next(u for u in db.t["users"] if u["id"] == "u1")["challenge_complete"] is True
+
+def test_paired_user_cannot_message_a_stale_chat_with_someone_else(env):
+    m, db, c, h = env
+    db.t["matches"].clear(); db.t["conversations"].clear()
+    like(c, m, "u1", "u2"); like(c, m, "u2", "u1")                      # u1 <-> u2 are now exclusively paired
+    db.t["conversations"].append({"id": "old", "user1_id": "u1", "user2_id": "u3", "phase": "anon",
+                                  "created_at": "2026-01-01T00:00:00+00:00", "updated_at": "2026-01-01T00:00:00+00:00"})
+    r = J(c, "post", "/api/conversations/old/messages", h("u1"), {"content": "hi"})
+    assert r.status_code == 403
+    chats = c.get("/api/conversations", headers=h("u1")).get_json()["data"]
+    assert all(x["other_user_id"] == "u2" for x in chats)               # only the partner is listed
+
+
+def test_logout_revokes_the_token(env):
+    m, db, c, h = env
+    tok = m.make_token("u1"); hdr = {"Authorization": "Bearer " + tok}
+    assert c.get("/api/pairing", headers=hdr).status_code == 200
+    assert c.post("/api/auth/logout", headers=hdr).status_code == 200
+    assert c.get("/api/pairing", headers=hdr).status_code == 401

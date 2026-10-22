@@ -11,6 +11,7 @@ import jwt
 import bcrypt
 import random
 import string
+import uuid
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 
@@ -58,14 +59,41 @@ def make_token(user_id: str) -> str:
         "sub": user_id,
         "iat": datetime.now(timezone.utc),
         "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRY_HOURS),
+        "jti": uuid.uuid4().hex,
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+
+
+_REVOKED = {}          # jti -> exp (in-memory copy; the revoked_tokens table is the shared source of truth)
+_NOT_REVOKED = {}      # jti -> checked-at (short negative cache so polling doesn't hit the DB on every call)
+
+
+def _is_revoked(jti) -> bool:
+    if not jti:
+        return False                      # tokens issued before logout support have no jti
+    if jti in _REVOKED:
+        return True
+    now = time.time()
+    if now - _NOT_REVOKED.get(jti, 0) < 20:
+        return False
+    try:
+        if supabase.table("revoked_tokens").select("jti").eq("jti", jti).execute().data:
+            _REVOKED[jti] = now
+            return True
+    except Exception:
+        pass                              # table missing (migration not run): fail open rather than lock everyone out
+    if len(_NOT_REVOKED) > 20000:
+        _NOT_REVOKED.clear()
+    _NOT_REVOKED[jti] = now
+    return False
 
 
 def decode_token(token: str) -> dict:
     p = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
     if p.get("purpose"):
         raise jwt.InvalidTokenError("not a login token")
+    if _is_revoked(p.get("jti")):
+        raise jwt.InvalidTokenError("logged out")
     return p
 
 
@@ -116,12 +144,30 @@ def _valid_id(x) -> bool:
 
 
 _RL = {}
+_REDIS = None
+if os.environ.get("REDIS_URL"):
+    try:
+        import redis as _redis_mod
+        _REDIS = _redis_mod.from_url(os.environ["REDIS_URL"], socket_timeout=1)
+    except Exception:
+        _REDIS = None                      # redis not installed / unreachable: use the in-memory limiter
 
 
 def _rate_limit(n, per):
     def deco(f):
         @wraps(f)
         def w(*a, **k):
+            if _REDIS is not None:         # shared across workers
+                try:
+                    rk = f"rl:{request.remote_addr}:{f.__name__}"
+                    c = _REDIS.incr(rk)
+                    if c == 1:
+                        _REDIS.expire(rk, per)
+                    if c > n:
+                        return err("Too many attempts — try again later", 429)
+                    return f(*a, **k)
+                except Exception:
+                    pass
             key, now = (request.remote_addr, f.__name__), time.time()
             hits = [t for t in _RL.get(key, []) if now - t < per]
             if len(hits) >= n:
@@ -968,25 +1014,45 @@ def get_conversations(user_id):
 
     convos = []
     _ended = _ended_with(user_id)
+    _my_partner = _paired_with(user_id)
+    rows = []
     for c in res.data:
         other_id = c["user2_id"] if c["user1_id"] == user_id else c["user1_id"]
         if other_id in _ended:          # ended matches disappear from the chat list
             continue
-        other = supabase.table("users").select("first_name, last_name").eq("id", other_id).single().execute().data
-        last_msg = supabase.table("messages").select("content, created_at").eq("conversation_id", c["id"]) \
-            .order("created_at", desc=True).limit(1).execute().data
-        unread = supabase.table("messages").select("id", count="exact").eq("conversation_id", c["id"]) \
-            .eq("is_read", False).neq("sender_id", user_id).execute()
-
-        convos.append({
-            "id":           c["id"],
-            "other_user_id": other_id,
-            "other_name":   f"{other['first_name']} {other['last_name']}",
-            "phase":        c.get("phase", "anon"),
-            "last_message": last_msg[0]["content"] if last_msg else "",
-            "last_time":    last_msg[0]["created_at"] if last_msg else c["created_at"],
-            "unread_count": unread.count or 0,
-        })
+        if _my_partner and other_id != _my_partner:      # while paired, only the partner's chat is listed
+            continue
+        rows.append((c, other_id))
+    if rows:
+        # batched: 3 queries in total instead of 3 per conversation
+        cids = [c["id"] for c, _ in rows]
+        users = {u["id"]: u for u in supabase.table("users").select("id, first_name, last_name")
+                 .in_("id", list({o for _, o in rows})).execute().data}
+        recent = supabase.table("messages").select("conversation_id, content, created_at") \
+            .in_("conversation_id", cids).order("created_at", desc=True).limit(max(200, 25 * len(cids))).execute().data
+        last = {}
+        for m in recent:
+            last.setdefault(m["conversation_id"], m)
+        unread = {}
+        for m in supabase.table("messages").select("conversation_id").in_("conversation_id", cids) \
+                .eq("is_read", False).neq("sender_id", user_id).execute().data:
+            unread[m["conversation_id"]] = unread.get(m["conversation_id"], 0) + 1
+        for c, other_id in rows:
+            lm = last.get(c["id"])
+            if lm is None and not recent == []:     # quiet chat older than the recent window: look it up individually
+                got = supabase.table("messages").select("content, created_at").eq("conversation_id", c["id"]) \
+                    .order("created_at", desc=True).limit(1).execute().data
+                lm = got[0] if got else None
+            other = users.get(other_id) or {"first_name": "Match", "last_name": ""}
+            convos.append({
+                "id":           c["id"],
+                "other_user_id": other_id,
+                "other_name":   f"{other['first_name']} {other['last_name']}".strip(),
+                "phase":        c.get("phase", "anon"),
+                "last_message": lm["content"] if lm else "",
+                "last_time":    lm["created_at"] if lm else c["created_at"],
+                "unread_count": unread.get(c["id"], 0),
+            })
 
     return ok(convos)
 
@@ -1040,6 +1106,8 @@ def send_message(user_id, convo_id):
         return err("Unauthorized", 403)
     if _connection_ended(_rows[0]["user1_id"], _rows[0]["user2_id"]):
         return err("This connection has ended", 403)
+    if _exclusive_blocked(_rows[0]["user1_id"], _rows[0]["user2_id"]):      # exclusivity: only your partner can contact you
+        return err("You can only chat with your current partner", 403)
 
     msg = supabase.table("messages").insert({
         "conversation_id": convo_id,
@@ -1455,6 +1523,25 @@ def _pw_fp(user):
     return hashlib.sha256(str(user.get("password_hash") or "").encode()).hexdigest()[:16]
 
 
+@app.route("/api/auth/logout", methods=["POST"])
+@require_auth
+def logout_server(user_id):
+    """Server-side logout: the token's id is blacklisted until it would have expired anyway."""
+    try:
+        p = jwt.decode(request.headers.get("Authorization", "")[7:], JWT_SECRET, algorithms=["HS256"])
+        jti = p.get("jti")
+        if jti:
+            _REVOKED[jti] = time.time()
+            try:
+                supabase.table("revoked_tokens").upsert({"jti": jti, "user_id": user_id,
+                    "expires_at": datetime.fromtimestamp(p["exp"], timezone.utc).isoformat()}, on_conflict="jti").execute()
+            except Exception:
+                app.logger.warning("revoked_tokens table missing - logout only effective on this worker")
+    except Exception:
+        pass
+    return ok(message="Logged out")
+
+
 @app.route("/api/auth/forgot", methods=["POST"])
 @_rate_limit(5, 60)
 def forgot_password():
@@ -1829,6 +1916,8 @@ def send_reveal_request(user_id):
         return err("Open a chat with someone first (receiver_id missing or invalid)")
     if _connection_ended(user_id, receiver_id):
         return err("This connection has ended", 403)
+    if _exclusive_blocked(user_id, receiver_id):
+        return err("You can only contact your current partner", 403)
     if not _have_conversation(user_id, receiver_id):   # same rule as chatting: you must already share a conversation
         return err("Start a conversation first, then request a photo reveal", 403)
 
@@ -1981,9 +2070,15 @@ def _get_match(a, b):
     return r[0] if r else None
 
 
+def _exclusive_blocked(a, b) -> bool:
+    """True if either user is in an exclusive pairing with someone other than the other person."""
+    pa, pb = _paired_with(a), _paired_with(b)
+    return bool((pa and pa != b) or (pb and pb != a))
+
+
 def _is_active_match(a, b):
     m = _get_match(a, b)
-    return bool(m) and m.get("status", "active") != "ended"
+    return bool(m) and m.get("status", "active") != "ended" and not _exclusive_blocked(a, b)
 
 
 def _notify(recipient, actor, ntype, title, body=""):

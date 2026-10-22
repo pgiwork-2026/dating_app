@@ -47,3 +47,14 @@ Run `migration_challenge.sql` in Supabase first (additive; adds `users.challenge
 **Enforcement:** `_ready()` now includes `challenge_complete`, so discovery, likes, opening chats, profile view, compat and report endpoints all refuse incomplete users. `_gate()` also refuses anyone with an active pairing to someone else.
 **Exclusivity:** a mutual like calls `create_exclusive_pairing` (advisory locks + partial unique index). Other pending likes/requests of both people are cancelled and affected users get a neutral notice. `/api/connections/<id>/end` frees both users.
 **Known limits:** proof review is manual (no automated activity check); movie scoring is a local rules baseline (8% of the match score); matches created before this migration have no pairing row (not backfilled); `closeness.status='engaged'` still excludes a pair permanently (pre-existing); video calls still need your Daily.co keys; `tests/test_e2e_*` browser tests need Playwright.
+
+---
+# Update (exclusivity + hardening)
+- Exclusive pairing now also blocks: sending in old chats with others, chat list, photo reveals, video/dating/games (via `_is_active_match`).
+- Password recovery already existed (`/api/auth/forgot`, `/reset`; needs SMTP env). Server-side logout added: `POST /api/auth/logout` + `revoked_tokens` table (`migration_hardening.sql`).
+- Chat list is batched (3 queries instead of 3 per chat). Optional Redis rate limiting via `REDIS_URL`.
+- `migration_rls.sql` enables RLS on every table (no policies; the service key still works).
+- `migration_dates`, `migration_safety`, `reset_interactions` renamed to `.sql` (the schema test was failing because they were not picked up).
+- Frontend: names/last message escaped in chat list, `escHtml` escapes quotes, chat redraws only on new messages, polling pauses on hidden tabs, partner banner, token revoked on logout.
+- Tests: 108 pass (`pytest -q tests --ignore=tests/test_e2e_*`).
+- NOT done: rotate Supabase/JWT keys (you must), HEAVEN UI screens, SSE/Realtime, splitting app.py/soulsync-ai.html.

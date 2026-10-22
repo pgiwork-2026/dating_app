@@ -2,3 +2,8 @@ venv/
 .env
 __pycache__/
 *.pyc
+venv/
+.venv/
+*.zip
+.env.*
+!.env.example
