@@ -7717,7 +7717,7 @@ button:active,.icon-btn:active,.mob-nav-item:active{transform:scale(.96)}
 .btn-primary::after,.ma-like::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);transition:transform .7s var(--ease)}
 .btn-primary:hover::after,.ma-like:hover::after{transform:translateX(120%)}
 /* cards: staggered entrance + lift */
-.mcard{animation:cardIn .55s var(--ease) both;animation-delay:calc(var(--i,0)*70ms)}
+.mcard{animation:cardIn .55s var(--ease) backwards;animation-delay:calc(var(--i,0)*70ms);touch-action:pan-y}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
 @media (hover:hover){.mcard:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(255,62,108,.18)}.chat-item:hover{transform:translateX(3px)}}
 /* like pop */
