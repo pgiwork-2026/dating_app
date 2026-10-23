@@ -4546,12 +4546,12 @@
             <div class="fg"><label>Password</label><input type="password" id="spass" placeholder="••••••••"></div>
             <div class="fg"><label>Date of Birth</label><input type="date" id="sdob"></div>
           </div>
-          <div class="fg"><label>I am a</label><select id="sgender">
+          <div class="fg"><label>I am a</label><select id="sgender" onchange="if(this.value===document.getElementById('sinterest').value)showAudienceNotice()">
               <option value="man">Man</option>
               <option value="woman">Woman</option>
               <option value="other">Non-binary / Other</option>
             </select></div>
-          <div class="fg"><label>Interested in</label><select id="sinterest">
+          <div class="fg"><label>Interested in</label><select id="sinterest" onchange="if(this.value===document.getElementById('sgender').value)showAudienceNotice()">
               <option value="woman">Woman</option>
               <option value="man">Man</option>
               <option value="everyone">Everyone</option>
@@ -5245,6 +5245,7 @@
       if (!first || !email || !pass || !dob) { toast('Please fill all required fields', 'error'); return; }
       if (!document.getElementById('sconsent').checked) { toast('Please tick the box to confirm you are 18+ and accept the policies', 'error'); return; }
       const gate = signupGate(dob); if (gate) { toast(gate, 'error'); return; }
+      if (document.getElementById('sgender').value === document.getElementById('sinterest').value) { showAudienceNotice(); return; }
       toast('Creating account...', 'info');
       const data = await apiFetch('auth/signup', 'POST', {
         first_name: first,
@@ -6007,7 +6008,20 @@
     // ══════════ MODALS + TOASTS ══════════
     function closeModal(id) { document.getElementById(id).classList.remove('open'); }
     document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+    function showAudienceNotice(msg) {
+      if (document.getElementById('audNotice')) return;
+      const o = document.createElement('div'); o.id = 'audNotice'; o.className = 'aud-overlay';
+      o.setAttribute('role', 'alertdialog'); o.setAttribute('aria-modal', 'true');
+      o.innerHTML = '<div class="aud-card"><h3>Heaven is for relationships between women and men</h3><p></p><button type="button" class="btn-primary">Change my selection</button></div>';
+      o.querySelector('p').textContent = msg || "Based on the gender and preference you selected, we can't create matches for you. If you chose these by mistake, you can change them and try again.";
+      const close = () => o.remove();
+      o.querySelector('button').onclick = close;
+      o.addEventListener('click', e => { if (e.target === o) close(); });
+      document.body.appendChild(o);
+      o.querySelector('button').focus();
+    }
     function toast(msg, type = 'info') {
+      if (typeof msg === 'string' && msg.indexOf('HEAVEN is designed for adults looking for relationships') === 0) { showAudienceNotice(msg); return; }
       const icons = { success: '✅', error: '❌', info: '💡', warning: '⚠️' };
       const t = document.createElement('div'); t.className = 'toast';
       t.innerHTML = `<span class="toast-icon">${icons[type] || '💡'}</span><span>${msg}</span>`;
@@ -8539,6 +8553,16 @@ html[data-mode="light"] .discover-title,html[data-mode="light"] .section-title{c
 html[data-mode="light"] .discover-title em,html[data-mode="light"] .section-title em{color:var(--tx-2)!important}
 html[data-mode="light"] .chat-tab,html[data-mode="light"] .mood-btn,html[data-mode="light"] .btn-ghost,html[data-mode="light"] .btn-outline{color:var(--tx)!important}
 html[data-mode="light"] .chat-tab.active{background:#16161D!important;color:#fff!important}
+
+.aud-overlay{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(6,6,10,.72)}
+.aud-card{width:min(560px,100%);text-align:center;padding:clamp(28px,5vw,48px);border-radius:24px;background:var(--ink-1,#fff);color:var(--tx,#16161D);border:1px solid var(--line-2,rgba(0,0,0,.2));box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.aud-card h3{font-size:clamp(24px,4.4vw,34px);line-height:1.15;letter-spacing:-.02em;margin:0 0 16px;font-weight:700}
+.aud-card p{font-size:clamp(15px,2.2vw,18px);line-height:1.6;color:var(--tx-2,#4B4B55);margin:0 0 28px}
+.aud-card .btn-primary{padding:14px 32px;font-size:16px;min-height:48px;border-radius:12px;cursor:pointer}
+.scr-chk{background:var(--glass-2)!important;border-color:var(--line-2)!important}
+.scr-chk,.scr-chk span{color:var(--tx)!important}
+.scr-chk span{font-size:14px!important;line-height:1.5}
+.scr-chk input{accent-color:var(--ember);flex-shrink:0}
 </style>
 <script id="afterglow-js">addEventListener("mousemove",function f(){document.body.classList.add("ag-mouse");removeEventListener("mousemove",f)},{passive:true});</script>
 <script id="back-nav">
