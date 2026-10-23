@@ -7792,7 +7792,7 @@ async function chDelMovie(id) { if (!confirm('Remove this movie from your journa
  // picking a contact closes the list and opens the conversation
  ['openChatByConvoId','openChatWithUser'].forEach(n=>{
   const f=window[n]; if(typeof f!=='function') return;
-  window[n]=function(){hideList(); return f.apply(this,arguments);};
+  window[n]=function(){const r=f.apply(this,arguments); hideList(); return r;};
  });
 })();
 </script>
@@ -8498,5 +8498,25 @@ body[data-page="landing"] .main{padding-top:0!important;margin-top:0!important}
 body[data-page="chat"] #partnerBanner{display:none!important}
 </style>
 <script id="afterglow-js">addEventListener("mousemove",function f(){document.body.classList.add("ag-mouse");removeEventListener("mousemove",f)},{passive:true});</script>
+<script id="back-nav">
+(function(){
+ const home=()=>(typeof S!=='undefined'&&S.user)?'matches':'landing';
+ const cur=()=>document.body.dataset.page||'landing';
+ const narrow=()=>matchMedia('(max-width:900px)').matches;
+ history.replaceState({r:1},'');
+ history.pushState({a:1},'');
+ addEventListener('popstate',function(e){
+  if(!(e.state&&e.state.r)) return;
+  const sb=document.querySelector('.chat-sidebar');
+  const inThread=cur()==='chat'&&narrow()&&sb&&!sb.classList.contains('mobile-visible');
+  window.__popping=true;
+  try{
+   if(inThread){ sb.classList.add('mobile-visible'); history.pushState({a:1},''); }
+   else if(cur()!==home()){ showPage(home()); history.pushState({a:1},''); }
+   else { history.back(); }
+  } finally { window.__popping=false; }
+ });
+})();
+</script>
 </body>
 </html>
