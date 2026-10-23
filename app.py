@@ -1048,6 +1048,7 @@ def get_conversations(user_id):
                 "id":           c["id"],
                 "other_user_id": other_id,
                 "other_name":   f"{other['first_name']} {other['last_name']}".strip(),
+                "created_at":   c.get("created_at"),
                 "phase":        c.get("phase", "anon"),
                 "last_message": lm["content"] if lm else "",
                 "last_time":    lm["created_at"] if lm else c["created_at"],
@@ -1163,6 +1164,10 @@ def request_reveal(user_id, convo_id):
     other_id = convo["user2_id"] if convo["user1_id"] == user_id else convo["user1_id"]
     if _connection_ended(convo["user1_id"], convo["user2_id"]):
         return err("This connection has ended", 403)
+    if action == "request":
+        _lk = _feature_locked_msg(user_id, other_id, "Photo reveal")
+        if _lk:
+            return err(_lk, 403)
 
     current_phase = convo.get("phase", "anon")
     if current_phase not in PHASE_ORDER:
@@ -1227,6 +1232,9 @@ def schedule_video(user_id):
     gid = d.get("guest_id")
     if not _valid_id(gid) or gid == user_id or not _is_active_match(user_id, gid):
         return err("You can only schedule calls with an active mutual match", 403)
+    _lk = _feature_locked_msg(user_id, gid, "Video invites")
+    if _lk:
+        return err(_lk, 403)
     when = d.get("scheduled_at")
     if when in (None, ""):
         when = None
@@ -1881,6 +1889,25 @@ def _ended_with(user_id) -> set:
     return out
 
 
+FEATURE_UNLOCK = timedelta(days=7)
+
+
+def _feature_unlock_at(a, b):
+    """When photo reveal / video invites open up for this pair: 7 days after their conversation started."""
+    for x, y in ((a, b), (b, a)):
+        rows = supabase.table("conversations").select("created_at").eq("user1_id", x).eq("user2_id", y).execute().data
+        if rows and rows[0].get("created_at"):
+            return _ts(rows[0]["created_at"]) + FEATURE_UNLOCK
+    return None
+
+
+def _feature_locked_msg(a, b, what):
+    at = _feature_unlock_at(a, b)
+    if at is not None and _now() < at:
+        return f"{what} unlocks 7 days after you start chatting (on {at.strftime('%d %b %Y')})"
+    return None
+
+
 def _have_conversation(a, b) -> bool:
     for x, y in ((a, b), (b, a)):
         if supabase.table("conversations").select("id").eq("user1_id", x).eq("user2_id", y).execute().data:
@@ -1920,6 +1947,9 @@ def send_reveal_request(user_id):
         return err("You can only contact your current partner", 403)
     if not _have_conversation(user_id, receiver_id):   # same rule as chatting: you must already share a conversation
         return err("Start a conversation first, then request a photo reveal", 403)
+    _lk = _feature_locked_msg(user_id, receiver_id, "Photo reveal")
+    if _lk:
+        return err(_lk, 403)
 
     st = _reveal_state(user_id, receiver_id)
     if st["state"] == "revealed":

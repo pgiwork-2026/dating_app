@@ -5666,7 +5666,8 @@
         renderLocalChatList();
         return;
       }
-      data.data.forEach(c => { S.convoUsers[c.id] = { userId: c.other_user_id, name: c.other_name || 'Match' }; });
+      data.data.forEach(c => { S.convoUsers[c.id] = { userId: c.other_user_id, name: c.other_name || 'Match', created_at: c.created_at }; });
+      try { updateFeatureLock(); } catch (e) { }
       list.innerHTML = data.data.map(c => {
         const lastTime = c.last_time ? fmtMsgTime(c.last_time) : '';
         const active = S.activeChat === c.id;
@@ -5720,7 +5721,7 @@
       const convoId = data.data.id || data.data.conversation_id;
       S.activeChat = convoId;
       S.activeChatName = name;
-      S.convoUsers[convoId] = { userId, name };
+      S.convoUsers[convoId] = { userId, name, created_at: data.data.created_at }; try { updateFeatureLock(); } catch (e) { }
       if (S.pollInterval) clearInterval(S.pollInterval);
       renderChatList();
       await loadMessages(convoId);
@@ -5844,7 +5845,22 @@
       if (!d.success) { toast(d.error || 'Could not send the reveal request', 'error'); return; }
       toast('🎙️ Reveal requested! Waiting for their consent...', 'info');
     }
+    // photo reveal + video invites open 7 days after the chat started
+    function featureLockMsg() {
+      const m = S.convoUsers && S.convoUsers[S.activeChat];
+      if (!m || !m.created_at) return '';
+      const at = new Date(m.created_at).getTime() + 7 * 864e5;
+      if (isNaN(at) || Date.now() >= at) return '';
+      const d = Math.ceil((at - Date.now()) / 864e5);
+      return 'Unlocks after 7 days of chatting (' + d + ' day' + (d > 1 ? 's' : '') + ' to go)';
+    }
+    function updateFeatureLock() {
+      const lk = !!featureLockMsg();
+      document.querySelectorAll('.ch-actions [title="Video Call"],.ch-actions [title="Request Photo Reveal"]').forEach(el => { el.style.opacity = lk ? '.4' : ''; });
+      const b = document.getElementById('revealRequestBtn'); if (b && lk) b.style.display = 'none';
+    }
     function initiateCallFromChat() {
+      { const lk = featureLockMsg(); if (lk) { toast('Video invites: ' + lk, 'info'); return; } }
       if (!S.activeChat || !S.activeChatName) { toast('Open a conversation first', 'info'); return; }
       if (!S.activeChatUserId || String(S.activeChat).startsWith('local_')) { toast('Video invitations need a live chat with this person', 'warning'); return; }
       startCall(S.activeChatUserId, S.activeChatName);
@@ -6368,6 +6384,7 @@
 
     function openPhotoRevealModal() {
       if (!S.activeChat) { toast('Select a chat first', 'warning'); return; }
+      { const lk = featureLockMsg(); if (lk) { toast('Photo reveal: ' + lk, 'info'); return; } }
       const st = S.reveal.state;
       if (!S.activeChatUserId || st === 'unavailable') { toast('Photo reveal needs a live chat with this person', 'warning'); return; }
       if (st === 'revealed') { toast('📸 Photos are already revealed', 'info'); return; }
@@ -6422,7 +6439,7 @@
       const inZone = !!(zone && zone.classList.contains('active'));
       const st = S.reveal.state, name = escHtml(S.activeChatName || 'They');
       const live = !!S.activeChat && !inZone;
-      btn.style.display = (live && st === 'none') ? 'flex' : 'none';
+      btn.style.display = (live && st === 'none' && !featureLockMsg()) ? 'flex' : 'none';
       let html = '';
       if (live && st === 'pending_sent') html = `<span class="rb-text">⏳ Photo reveal request sent. Waiting for ${name} to accept.</span>`;
       else if (live && st === 'pending_received') html = `<span class="rb-text">📸 <b>${name}</b> wants to reveal photos with you.</span>
