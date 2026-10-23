@@ -5161,12 +5161,13 @@
     }
     document.addEventListener('click', () => { try { if (window.Notification && Notification.permission === 'default' && S.user) Notification.requestPermission(); } catch (e) { } });
     setInterval(() => { try { renderNotifList(); } catch (e) { } }, 60000);
+    const NOTIF_HEART = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5 4.6 13.2A4.8 4.8 0 0 1 12 7a4.8 4.8 0 0 1 7.4 6.2Z"/></svg>';
     function renderNotifList() {
       const el = document.getElementById('notifList');
       if (!notifications.length) { el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink3);font-size:13px;">No notifications</div>'; return; }
       el.innerHTML = notifications.map((n, i) => `
     <div class="notif-item ${n.unread ? 'unread' : ''}" onclick="notifClickAt(${i})">
-      <div class="notif-item-icon">${n.icon}</div>
+      <div class="notif-item-icon">${(n.icon === '💕' || n.icon === '💛') ? NOTIF_HEART : n.icon}</div>
       <div class="notif-item-body"><p>${n.text}</p><span>${n.ts ? timeAgo(n.ts) : n.time}</span>${n.actions || ''}</div>
     </div>`).join('');
     }
