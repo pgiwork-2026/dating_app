@@ -5149,11 +5149,7 @@
         const nav = document.getElementById('mobileBottomNav');      // sit above the mobile bottom nav so it never covers the tabs
         const nh = nav && getComputedStyle(nav).display !== 'none' ? nav.offsetHeight : 0;
         b.style.bottom = (nh + 10) + 'px';
-
-        if (r && r.success && r.data && r.data.active) { b.textContent = '💞 Exclusively matched with ' + (r.data.partner_first_name || 'your match'); b.style.display = 'block'; }
-
         if (r && r.success && r.data && r.data.active) { b.textContent = 'Exclusively matched with ' + (r.data.partner_first_name || 'your match'); b.style.display = 'block'; }
-
         else b.style.display = 'none';
       } catch (e) { }
     }
@@ -5690,6 +5686,9 @@
 
     async function openChatWithUser(userId, userName) {
       showPage('chat');
+      if (S.pollInterval) clearInterval(S.pollInterval);
+      S.activeChat = null;
+      { const _w = document.getElementById('msgsWrap'); delete _w.dataset.sig; _w.innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink3);font-size:13px;">Loading...</div>'; }
       const name = userName || 'Match';
       S.activeChatUserId = userId;
       S.reveal = { userId, state: 'loading' }; _revealAvatarFor = null; renderRevealUI();
@@ -5723,9 +5722,9 @@
       S.activeChatName = name;
       S.convoUsers[convoId] = { userId, name };
       if (S.pollInterval) clearInterval(S.pollInterval);
-      await loadMessages(convoId);
       renderChatList();
-      S.pollInterval = setInterval(() => { if (!document.hidden) loadMessages(convoId, true); }, 3000);
+      await loadMessages(convoId);
+      clearInterval(S.pollInterval); S.pollInterval = setInterval(() => { if (!document.hidden) loadMessages(convoId, true); }, 3000);
     }
 
     async function openChatByConvoId(convoId, nameHint) {
@@ -5733,6 +5732,10 @@
       showPage('chat');
       if (S.pollInterval) clearInterval(S.pollInterval);
       S.activeChat = convoId;
+      { const _w = document.getElementById('msgsWrap'); delete _w.dataset.sig;
+        if (S.msgCache && S.msgCache[convoId]) { _w.innerHTML = S.msgCache[convoId]; _w.scrollTop = _w.scrollHeight; }
+        else _w.innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink3);font-size:13px;">Loading...</div>'; }
+      if (S.convoUsers[convoId]) { const _n = nameHint || S.convoUsers[convoId].name || 'Match'; document.getElementById('chName').textContent = _n; document.getElementById('chAvatar').textContent = _n[0].toUpperCase(); }
       if (!convoId.startsWith('local_') && !S.convoUsers[convoId]) {      // opened from a notification before the list loaded
         const cl = await apiFetch('conversations');
         if (cl.success && cl.data) cl.data.forEach(c => { S.convoUsers[c.id] = { userId: c.other_user_id, name: c.other_name || 'Match' }; });
@@ -5750,13 +5753,15 @@
       document.getElementById('chName').textContent = name;
       document.getElementById('chStatus').textContent = '● Online';
       document.getElementById('reportMatchName').textContent = name;
-      await loadMessages(convoId);
       buildCoach();
       renderChatList();
-      S.pollInterval = setInterval(() => { if (!document.hidden) loadMessages(convoId, true); }, 3000);
+      await loadMessages(convoId);
+      if (S.activeChat !== convoId) return;
+      clearInterval(S.pollInterval); S.pollInterval = setInterval(() => { if (!document.hidden) loadMessages(convoId, true); }, 3000);
     }
 
     async function loadMessages(convoId, silent = false) {
+      if (convoId && convoId !== S.activeChat) return;
       if (convoId && convoId.startsWith('local_')) {
         const userId = convoId.replace('local_', '');
         const stored = JSON.parse(localStorage.getItem('ss_local_msgs_' + userId) || '[]');
@@ -5770,6 +5775,7 @@
         return;
       }
       const data = await apiFetch('conversations/' + convoId + '/messages');
+      if (convoId !== S.activeChat) return;
       if (!data.success) { if (!silent) toast('Could not load messages', 'error'); return; }
       if (convoId === S.activeChat && (!silent || Date.now() - _revealLastFetch > 6000)) { _revealLastFetch = Date.now(); refreshRevealState(); }
       const w = document.getElementById('msgsWrap');
@@ -5788,6 +5794,7 @@
         const time = m.created_at ? fmtMsgTime(m.created_at) : '';
         return `<div class="msg ${isMine ? 'sent' : 'recv'}"><div class="msg-bubble">${escHtml(m.content || m.text || '')}</div><div class="msg-time">${time}${isMine ? ' ✓' : ''}</div></div>`;
       }).join('');
+      (S.msgCache = S.msgCache || {})[convoId] = w.innerHTML;
       if (atBottom || !silent) w.scrollTop = w.scrollHeight;
     }
 
@@ -8481,6 +8488,14 @@ body[data-page="landing"] .main{padding-top:0!important;margin-top:0!important}
 .lp-inner{min-width:0;width:100%;max-width:640px}
 .lp h1,.lp p{overflow-wrap:break-word}
 @media(max-width:600px){.lp{padding:24px 20px 20px}.lp h1{font-size:clamp(40px,12.5vw,56px)}.lp p{font-size:16px;margin-bottom:32px}.lp-foot{gap:8px 20px}}
+
+/* chat bubble layout + hide overlapping banner */
+.msg{width:fit-content;max-width:min(80%,560px)!important}
+.msg-bubble{max-width:none!important;word-break:normal!important;overflow-wrap:break-word!important;white-space:pre-wrap}
+.msg.sent{margin-left:auto}.msg.recv{margin-right:auto}
+.msg-time{white-space:nowrap}
+@media(max-width:700px){.msg{max-width:84%!important}}
+body[data-page="chat"] #partnerBanner{display:none!important}
 </style>
 <script id="afterglow-js">addEventListener("mousemove",function f(){document.body.classList.add("ag-mouse");removeEventListener("mousemove",f)},{passive:true});</script>
 </body>
