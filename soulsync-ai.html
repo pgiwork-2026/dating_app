@@ -4780,7 +4780,7 @@
             <div class="ch-actions">
               <div class="icon-btn" onclick="reportUser()" title="Report">🚩</div>
               <div class="icon-btn" onclick="blockUser()" title="Block">🚫</div>
-              <div class="icon-btn" onclick="openCloseness()" title="Closeness">💞</div>
+              <div class="icon-btn closeness-btn" onclick="openCloseness()" title="Closeness"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 0 1 12 6.2a5 5 0 0 1 7.5 6.4Z"/><path d="M3.5 12h4l1.8-3 2.4 6 1.8-3h3"/></svg></div>
               <div class="icon-btn" onclick="initiateCallFromChat()" title="Video Call">📹</div>
               <div class="icon-btn" onclick="openPhotoRevealModal()" title="Request Photo Reveal">📸</div>
               <div class="icon-btn" onclick="openReveal()" title="Reveal Phase">🔓</div>
@@ -4875,6 +4875,7 @@
             </div>
           </div>
 
+          <button id="helpersToggle" type="button" onclick="var o=document.body.classList.toggle('show-chat-helpers');this.textContent=o?'Hide suggestions':'\u2728 Show suggestions'">✨ Show suggestions</button>
           <!-- AI STARTERS STRIP -->
           <div class="ai-starters-strip" id="aiStartersStrip">
             <div class="ai-starters-label">✨ Need help starting?</div>
@@ -8564,6 +8565,35 @@ html[data-mode="light"] .chat-tab.active{background:#16161D!important;color:#fff
 .scr-chk span{font-size:14px!important;line-height:1.5}
 .scr-chk input{accent-color:var(--ember);flex-shrink:0}
 body:not(.logged-in) #partnerBanner{display:none!important}
+
+/* chat-space fix: compact helper strips, collapsible, messages get priority */
+.chat-main{overflow:hidden!important}
+.msgs{flex:1 1 0!important;min-height:0!important}
+.chat-input-wrap,.chat-input-row{flex-shrink:0!important}
+.chat-main>*{flex-shrink:0}
+.chat-main>.msgs{flex-shrink:1}
+.chat-main [class*="tab"],.chat-main .phase-strip,.chat-main .mood-row,.chat-main .mood-strip{padding-top:4px!important;padding-bottom:4px!important}
+
+.ai-starters-strip,.coach-strip{display:flex!important;align-items:center;gap:10px;padding:6px 16px!important;flex-shrink:0}
+.ai-starters-label,.coach-label{white-space:nowrap;font-size:10px!important;margin:0!important}
+.ai-starters-row,.coach-row{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+.ai-starters-row>*,.coach-row>*{flex-shrink:0;white-space:nowrap;padding:5px 12px!important;font-size:12px!important}
+body:not(.show-chat-helpers) .ai-starters-strip,body:not(.show-chat-helpers) .coach-strip{display:none!important}
+#helpersToggle{align-self:flex-end;margin:2px 16px;padding:3px 10px;font-size:11px;border-radius:999px;border:1px solid var(--line,#333);background:transparent;color:inherit;cursor:pointer;opacity:.75;flex-shrink:0}
+#closeBox input,#closeBox select{color:#222!important;background:#fff!important;border:1px solid #ddd!important}
+.milestones-strip{background:var(--glass,#16161c)!important;border:1px solid var(--line,#2a2a33)!important;color:var(--tx,#f2f2f5)!important}
+.milestone-label{color:var(--tx-2,#b8b8c4)!important}
+.milestone-row{gap:10px}
+.milestone-item{background:rgba(255,255,255,.04)!important;border:1px solid var(--line,#2a2a33)!important;opacity:1!important}
+.milestone-item:not(.done) .milestone-icon{opacity:.45;filter:grayscale(1)}
+.milestone-item:not(.done) .milestone-name{color:var(--tx-2,#9a9aa8)!important}
+.milestone-item.done{background:rgba(255,140,50,.14)!important;border-color:#ff8c32!important}
+.milestone-item.done .milestone-name{color:var(--tx,#fff)!important}
+.milestone-name{color:var(--tx,#fff)}
+.closeness-btn{color:#ff8c32!important;background:rgba(255,140,50,.10)!important;border:1px solid rgba(255,140,50,.45)!important;box-shadow:0 0 0 0 rgba(255,140,50,.35);animation:clsPulse 2.6s ease-in-out infinite}
+.closeness-btn:hover{background:rgba(255,140,50,.22)!important;box-shadow:0 0 14px rgba(255,140,50,.45)}
+@keyframes clsPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,140,50,.30)}50%{box-shadow:0 0 0 6px rgba(255,140,50,0)}}
+@media (prefers-reduced-motion:reduce){.closeness-btn{animation:none}}
 </style>
 <script id="afterglow-js">addEventListener("mousemove",function f(){document.body.classList.add("ag-mouse");removeEventListener("mousemove",f)},{passive:true});</script>
 <script id="back-nav">

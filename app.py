@@ -241,7 +241,7 @@ def signup():
     password_hash = hash_password(d["password"])
 
     try:
-        dob = datetime.strptime(str(d["dob"]), "%Y-%m-%d")
+        datetime.strptime(str(d["dob"]), "%Y-%m-%d")   # validates format
         age = _age_on(str(d["dob"]))
     except ValueError:
         return err("Invalid date format. Use YYYY-MM-DD")
@@ -546,7 +546,6 @@ def get_matches(user_id):
     pers  = supabase.table("personality_profiles").select("*").eq("user_id", user_id).execute().data
     user  = supabase.table("users").select("*").eq("id", user_id).single().execute().data
 
-    prefs_data = prefs[0] if prefs else {}
     pers_data  = pers[0]  if pers  else {}
     if not user.get("screening_complete"):
                 return ok([], "Complete your profile screening to see matches")
@@ -559,7 +558,6 @@ def get_matches(user_id):
 
     # Fetch candidate users (exclude self and already-liked)
     liked_res = supabase.table("likes").select("liked_id").eq("liker_id", user_id).execute()
-    liked_ids = [l["liked_id"] for l in liked_res.data]
 
     # Determine current user's gender for reverse-filter
     my_gender    = user.get("gender", "other")        # what I am
@@ -575,7 +573,6 @@ def get_matches(user_id):
 
     # Filter out already liked
     # AFTER (keeps them visible, just marks them as liked)
-    liked_ids = set(l["liked_id"] for l in liked_res.data)
     # remove the filter line — don't exclude liked users
 
     # ── Gender preference filter ──────────────────────────────────────────
@@ -1319,7 +1316,6 @@ AI_COACH_POOL = [
 @app.route("/api/coach/suggestions", methods=["GET"])
 @require_auth
 def coach_suggestions(user_id):
-    convo_id = request.args.get("conversation_id")
     # In production: analyze message history and generate context-aware suggestions with an LLM
     suggestions = random.sample(AI_COACH_POOL, 3)
     return ok(suggestions)
@@ -1672,8 +1668,8 @@ def date_feedback(user_id, did):
 # CLOSENESS  (0-100% bond between a matched pair; at 100% both are asked about engagement)
 # ─────────────────────────────────────────────
 # Server-computed from real activity only, so it cannot be faked from the browser:
-#   conversation days (two-way, max 4 pts/day) + accepted reveal steps (10 each, max 3) + photo reveal (8)
-#   + accepted/completed video dates (8 each, max 3) + accepted dating request (15).
+#   conversation days (two-way, 1 pt/day) + accepted reveal steps (1 each, max 3) + photo reveal (5)
+#   + accepted/completed video dates (10 each, max 3) + accepted dating request (15).
 # "More time" stores a negative offset so the score drops to exactly 50 and must be earned again.
 
 def _closeness_row(a, b):
@@ -1696,9 +1692,9 @@ def _closeness_raw(a, b):
             if day:
                 per_day.setdefault(day, {})
                 per_day[day][r["sender_id"]] = per_day[day].get(r["sender_id"], 0) + 1
-    chat = sum(min(4, 1 + sum(w.values()) // 6) for w in per_day.values() if a in w and b in w)
+    chat = sum(1 for w in per_day.values() if a in w and b in w)
     phases = sum(len(supabase.table("reveal_requests").select("id").eq("conversation_id", cid).eq("status", "accepted").execute().data or []) for cid in cids)
-    photo = 8 if b in _revealed_with(a) else 0
+    photo = 5 if b in _revealed_with(a) else 0
     vids = 0
     for h, g in ((a, b), (b, a)):
         vids += len(supabase.table("video_dates").select("id").eq("host_id", h).eq("guest_id", g).in_("status", ["accepted", "completed"]).execute().data or [])
@@ -1707,8 +1703,8 @@ def _closeness_raw(a, b):
     except Exception:
         ndates = 0
     dating = 15 if supabase.table("dating_requests").select("id").eq("user1_id", u1).eq("user2_id", u2).eq("status", "accepted").execute().data else 0
-    parts = [{"label": "Conversations", "points": chat}, {"label": "Reveal steps", "points": min(phases, 3) * 10},
-             {"label": "Photos revealed", "points": photo}, {"label": "Video dates", "points": min(vids, 3) * 8},
+    parts = [{"label": "Conversations", "points": chat}, {"label": "Reveal steps", "points": min(phases, 3) * 1},
+             {"label": "Photos revealed", "points": photo}, {"label": "Video dates", "points": min(vids, 3) * 10},
              {"label": "Dating", "points": dating},
              {"label": f"Real dates ({ndates})", "points": min(ndates, 3) * 12}]
     return parts, sum(p["points"] for p in parts)
@@ -3126,4 +3122,4 @@ couple_games.register(app, globals())   # Couple Zone private game rooms (see co
 
 
 if __name__ == "__main__":
-    app.run(debug=os.environ.get("FLASK_DEBUG") == "1", port=5000, host="0.0.0.0", threaded=False)  # debug OFF unless FLASK_DEBUG=1
+    app.run(debug=os.environ.get("FLASK_DEBUG") == "1", port=5000, host=os.environ.get("HOST", "127.0.0.1"))  # debug OFF unless FLASK_DEBUG=1

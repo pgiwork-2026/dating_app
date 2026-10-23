@@ -509,7 +509,7 @@ def register(app, g):
         if row["status"] in ("declined", "cancelled"):
             return ok({"game": None})
         if row["status"] == "invited":
-            new = save(row, "cancelled" if row["inviter_id"] == user_id else "declined")
+            save(row, "cancelled" if row["inviter_id"] == user_id else "declined")
             return ok({"game": None})
         st = dict(row["state"])
         if not st.get("left_by"):
