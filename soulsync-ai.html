@@ -5148,7 +5148,7 @@
         const nh = nav && getComputedStyle(nav).display !== 'none' ? nav.offsetHeight : 0;
         b.style.bottom = (nh + 10) + 'px';
         if (r && r.success && r.data && r.data.active) { b.textContent = 'Exclusively matched with ' + (r.data.partner_first_name || 'your match'); b.style.display = 'block'; }
-        else b.style.display = 'none';
+        else { b.style.display = 'none'; b.textContent = ''; }
       } catch (e) { }
     }
     window.addEventListener('resize', () => { try { const b = document.getElementById('partnerBanner'), nav = document.getElementById('mobileBottomNav'); if (b && nav) b.style.bottom = ((getComputedStyle(nav).display !== 'none' ? nav.offsetHeight : 0) + 10) + 'px'; } catch (e) { } });
@@ -5295,7 +5295,7 @@
       if (S.pollInterval) clearInterval(S.pollInterval);
       if (_notifPollInterval) clearInterval(_notifPollInterval);
       notifications = []; renderNotifList(); updateBadges();
-      DB.clear(); localStorage.removeItem('ss_token'); try { const _pb = document.getElementById('partnerBanner'); if (_pb) _pb.style.display = 'none'; } catch (e) { }
+      DB.clear(); localStorage.removeItem('ss_token'); try { const _pb = document.getElementById('partnerBanner'); if (_pb) { _pb.style.display = 'none'; _pb.textContent = ''; } } catch (e) { }
       S.user = null; S.myLikes = [];
       document.body.classList.remove('logged-in');
       document.getElementById('authBtns').style.display = 'flex';
@@ -8563,6 +8563,7 @@ html[data-mode="light"] .chat-tab.active{background:#16161D!important;color:#fff
 .scr-chk,.scr-chk span{color:var(--tx)!important}
 .scr-chk span{font-size:14px!important;line-height:1.5}
 .scr-chk input{accent-color:var(--ember);flex-shrink:0}
+body:not(.logged-in) #partnerBanner{display:none!important}
 </style>
 <script id="afterglow-js">addEventListener("mousemove",function f(){document.body.classList.add("ag-mouse");removeEventListener("mousemove",f)},{passive:true});</script>
 <script id="back-nav">
