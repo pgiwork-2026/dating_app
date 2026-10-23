@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <script>try{document.documentElement.setAttribute("data-mode",localStorage.getItem("ss_mode")==="light"?"light":"dark")}catch(e){}</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Heaven – Find Your Match</title>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&display=swap" rel="stylesheet">
@@ -5052,17 +5053,14 @@
           </div>
 
           <div class="psec">
-            <h4>🎨 Profile Theme</h4>
-            <p style="color:var(--ink3);font-size:13px;margin-bottom:14px;">Personalise your entire experience</p>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-              <div class="theme-tile" onclick="applyTheme('default')" style="background:#FF3E6C;border-radius:12px;height:60px;cursor:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;border:2px solid transparent;" id="theme-default">🌸 Default</div>
-              <div class="theme-tile" onclick="applyTheme('neon')" style="background:#00f5a0;border-radius:12px;height:60px;cursor:none;display:flex;align-items:center;justify-content:center;color:#0a0a1a;font-size:11px;font-weight:700;">⚡ Neon Love</div>
-              <div class="theme-tile" onclick="applyTheme('galaxy')" style="background:#0f0c29;border-radius:12px;height:60px;cursor:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">🌌 Galaxy</div>
-              <div class="theme-tile" onclick="applyTheme('vintage')" style="background:#d4a574;border-radius:12px;height:60px;cursor:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">📜 Vintage</div>
-              <div class="theme-tile" onclick="applyTheme('lavender')" style="background:#c8b6e2;border-radius:12px;height:60px;cursor:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">💜 Lavender</div>
-              <div class="theme-tile" onclick="applyTheme('sunset')" style="background:#f7971e;border-radius:12px;height:60px;cursor:none;display:flex;align-items:center;justify-content:center;color:#0a0a1a;font-size:11px;font-weight:700;">🌅 Sunset</div>
+            <h4>Appearance</h4>
+            <p style="color:var(--ink3);font-size:13px;margin-bottom:14px;">Choose how Heaven looks on your device</p>
+            <div class="mode-seg" role="group" aria-label="Appearance">
+              <button type="button" id="modeDark" onclick="setMode('dark')">Dark</button>
+              <button type="button" id="modeLight" onclick="setMode('light')">Light</button>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>
@@ -6239,12 +6237,12 @@
     ══════════════════════════════════════════ */
     (function checkMidnight() {
       const h = new Date().getHours();
-      if (h >= 21 || h < 6) {
+      if (false) {
         document.body.classList.add('midnight-mode');
       }
       setInterval(() => {
         const hh = new Date().getHours();
-        document.body.classList.toggle('midnight-mode', hh >= 21 || hh < 6);
+        document.body.classList.remove('midnight-mode');
       }, 60000);
     })();
 
@@ -6919,28 +6917,15 @@
     /* ══════════════════════════════════════════
        PROFILE THEMES
     ══════════════════════════════════════════ */
-    function applyTheme(name) {
-      const themes = {
-        default: { r: '#FF3E6C', r2: '#FF7096', p: '#7C3AED', p2: '#A78BFA' },
-        neon: { r: '#00f5a0', r2: '#00d9f5', p: '#0062ff', p2: '#00c9ff' },
-        galaxy: { r: '#9b59b6', r2: '#8e44ad', p: '#2c3e50', p2: '#4a6fa5' },
-        vintage: { r: '#d4a574', r2: '#c19a6b', p: '#8b6339', p2: '#a0785a' },
-        lavender: { r: '#8b5e83', r2: '#c8b6e2', p: '#7b5ea7', p2: '#b4a0d0' },
-        sunset: { r: '#f7971e', r2: '#ffd200', p: '#e85d04', p2: '#f48c06' },
-      };
-      const t = themes[name] || themes.default;
-      document.documentElement.style.setProperty('--r', t.r);
-      document.documentElement.style.setProperty('--r2', t.r2);
-      document.documentElement.style.setProperty('--p', t.p);
-      document.documentElement.style.setProperty('--p2', t.p2);
-      document.documentElement.style.setProperty('--r-grad', `transparent`);
-      document.documentElement.style.setProperty('--p-grad', `transparent`);
-      DB.set('theme', name);
-      toast(`🎨 ${name.charAt(0).toUpperCase()+name.slice(1)} theme applied!`, 'success');
+    function setMode(m) {
+      m = m === 'light' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-mode', m);
+      try { localStorage.setItem('ss_mode', m); } catch (e) { }
+      const d = document.getElementById('modeDark'), l = document.getElementById('modeLight');
+      if (d && l) { d.classList.toggle('on', m === 'dark'); l.classList.toggle('on', m === 'light'); }
+      const mc = document.querySelector('meta[name="theme-color"]'); if (mc) mc.content = m === 'light' ? '#F6F4EF' : '#06060A';
     }
-    // Restore saved theme
-    const savedTheme = DB.get('theme');
-    if (savedTheme && savedTheme !== 'default') applyTheme(savedTheme);
+    setMode(document.documentElement.getAttribute('data-mode'));
 
     /* ══════════════════════════════════════════
        CONNECT NEW FEATURES TO EXISTING FLOW
@@ -8513,6 +8498,32 @@ body[data-page="landing"] .main{padding-top:0!important;margin-top:0!important}
 .msg-time{white-space:nowrap}
 @media(max-width:700px){.msg{max-width:84%!important}}
 body[data-page="chat"] #partnerBanner{display:none!important}
+
+/* ═══ APPEARANCE: dark (default) / light ═══ */
+.mode-seg{display:inline-flex;padding:4px;border-radius:12px;background:var(--glass-2);border:1px solid var(--line)}
+.mode-seg button{font:600 14px var(--sans);padding:10px 28px;border:0;border-radius:9px;background:transparent;color:var(--tx-2);cursor:pointer;min-height:40px}
+.mode-seg button.on{background:var(--tx);color:var(--ink-0)}
+html[data-mode="light"]{color-scheme:light;
+  --ink-0:#F6F4EF;--ink-1:#FFFFFF;--ink-2:#EFECE6;--ink-3:#E6E2DA;
+  --line:rgba(20,20,30,.1);--line-2:rgba(20,20,30,.2);--glass:rgba(20,20,30,.035);--glass-2:rgba(20,20,30,.07);
+  --tx:#16161D;--tx-2:#4B4B55;--tx-3:#7A7A85;--lime:#5F7F00;
+  --ink:#16161D;--ink2:#4B4B55;--ink3:#7A7A85;--surf:#F6F4EF;--card:#FFFFFF;--border:rgba(20,20,30,.1);
+  --glass-old:rgba(20,20,30,.05);--sh:0 1px 2px rgba(20,20,30,.06);--sh-lg:0 18px 50px rgba(20,20,30,.14);--sh-glow:none;--glow:transparent;--glow-p:transparent}
+html[data-mode="light"] body::after{display:none}
+html[data-mode="light"] .nav,html[data-mode="light"] .mobile-nav,html[data-mode="light"] .modal,html[data-mode="light"] .pview-modal{background:rgba(255,255,255,.92)!important;color:var(--tx)}
+html[data-mode="light"] .chat-sidebar,html[data-mode="light"] .chat-main{background:#fff!important}
+html[data-mode="light"] .msg.recv .msg-bubble{background:#EFECE6!important;color:var(--tx)!important}
+html[data-mode="light"] .icon-btn,html[data-mode="light"] .user-pill,html[data-mode="light"] .chat-item,html[data-mode="light"] .coach-chip{background:var(--glass-2)!important;color:var(--tx)!important;border-color:var(--line)!important}
+html[data-mode="light"] input,html[data-mode="light"] textarea,html[data-mode="light"] select{background:#fff!important;color:var(--tx)!important;border-color:var(--line-2)!important}
+html[data-mode="light"] input::placeholder,html[data-mode="light"] textarea::placeholder{color:var(--tx-3)}
+html[data-mode="light"] .nav-link{color:var(--tx-2)}
+html[data-mode="light"] .nav-link.active{background:var(--tx)!important;color:#fff!important}
+
+html[data-mode="light"] .nav-links{background:rgba(255,255,255,.92)!important;border:1px solid var(--line)!important;box-shadow:0 6px 24px rgba(20,20,30,.08)!important}
+html[data-mode="light"] .nav-link{color:var(--tx-2)!important}
+html[data-mode="light"] .nav-link.active{background:var(--tx)!important;color:#fff!important}
+html[data-mode="light"] .btn-primary{color:#fff!important}
+html[data-mode="light"] #authBtns button:last-child{background:#16161D!important;color:#fff!important}
 </style>
 <script id="afterglow-js">addEventListener("mousemove",function f(){document.body.classList.add("ag-mouse");removeEventListener("mousemove",f)},{passive:true});</script>
 <script id="back-nav">
