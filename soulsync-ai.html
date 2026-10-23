@@ -8527,6 +8527,18 @@ html[data-mode="light"] #authBtns button:last-child{background:#16161D!important
 html[data-mode="light"] #partnerBanner{background:#16161D!important;color:#F5F2EC!important;border-color:transparent!important}
 .ph-avatar::before{-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)!important;-webkit-mask-composite:xor!important;mask-composite:exclude!important;animation:none!important}
 .ph-avatar{box-shadow:0 0 0 4px var(--ink-0)!important}
+
+/* light mode: mobile readability */
+html[data-mode="light"] body.logged-in:not([data-page="screening"]) .mobile-nav,html[data-mode="light"] body .mobile-nav{background:rgba(255,255,255,.96)!important;border:1px solid var(--line-2)!important;box-shadow:0 8px 28px rgba(20,20,30,.12)!important;backdrop-filter:none!important}
+html[data-mode="light"] .mob-nav-item{color:var(--tx-2)!important}
+html[data-mode="light"] .mob-nav-item.active{color:var(--tx)!important;background:var(--ink-2)!important}
+html[data-mode="light"] .fbtn{color:var(--tx-2)!important;background:transparent!important}
+html[data-mode="light"] .fbtn.active{background:#16161D!important;color:#fff!important}
+html[data-mode="light"] .filter-bar{background:var(--ink-2)!important;border-color:var(--line)!important}
+html[data-mode="light"] .discover-title,html[data-mode="light"] .section-title{color:var(--tx)!important}
+html[data-mode="light"] .discover-title em,html[data-mode="light"] .section-title em{color:var(--tx-2)!important}
+html[data-mode="light"] .chat-tab,html[data-mode="light"] .mood-btn,html[data-mode="light"] .btn-ghost,html[data-mode="light"] .btn-outline{color:var(--tx)!important}
+html[data-mode="light"] .chat-tab.active{background:#16161D!important;color:#fff!important}
 </style>
 <script id="afterglow-js">addEventListener("mousemove",function f(){document.body.classList.add("ag-mouse");removeEventListener("mousemove",f)},{passive:true});</script>
 <script id="back-nav">
