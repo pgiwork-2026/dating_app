@@ -8598,6 +8598,14 @@ body:not(.show-chat-helpers) .ai-starters-strip,body:not(.show-chat-helpers) .co
 .nav-brand{gap:0!important}
 .mm-tab .mm-ic{vertical-align:-3px;margin-right:4px}
 .mm-tab.active .mm-ic{color:#ff8c32}
+.discover-header{flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center}
+.discover-title{text-align:center!important;width:100%}
+.discover-header .filter-bar,.discover-header .mm-tabs{align-self:center;justify-content:center}
+@media (max-width:768px){
+.discover-header{width:100%;max-width:100%;align-items:center!important;text-align:center!important}
+.discover-title{display:block;width:100%!important;max-width:100%;box-sizing:border-box;margin:0 auto!important;padding:0 8px;text-align:center!important;font-size:clamp(30px,10vw,46px)!important;line-height:1!important;white-space:normal;overflow-wrap:anywhere}
+.discover-header .filter-bar{max-width:100%}
+}
 </style>
 <script id="afterglow-js">addEventListener("mousemove",function f(){document.body.classList.add("ag-mouse");removeEventListener("mousemove",f)},{passive:true});</script>
 <script id="back-nav">
