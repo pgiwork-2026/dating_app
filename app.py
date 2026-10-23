@@ -1333,7 +1333,9 @@ def serve_frontend():
     # Try common filenames
     for fname in ["soulsync-ai-fixed.html", "soulsync-ai.html", "index.html"]:
         if os.path.exists(os.path.join(directory, fname)):
-            return send_from_directory(directory, fname)
+            resp = send_from_directory(directory, fname)
+            resp.headers["Cache-Control"] = "no-cache"   # always revalidate so phones pick up UI updates
+            return resp
     return "<h2>soulsync-ai.html not found — make sure it's in the same folder as app.py</h2>", 404
 
 
