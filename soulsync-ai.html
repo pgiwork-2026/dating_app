@@ -5283,7 +5283,7 @@
       document.body.classList.add('logged-in');
       document.getElementById('authBtns').style.display = 'none';
       const pill = document.getElementById('userPill'); pill.classList.add('visible');
-      document.getElementById('pillAvatar').textContent = (S.user.first || 'U')[0].toUpperCase();
+      document.getElementById('pillAvatar').textContent = (S.user.first || 'U')[0].toUpperCase(); if (S.avatar && typeof applyAvatar === 'function') applyAvatar(S.avatar);
       document.getElementById('pillName').textContent = S.user.first || 'You';
       startNotifPolling();   // FIX: server notifications were never polled
             if (typeof loadAvatarFromServer === 'function') loadAvatarFromServer(); else window.addEventListener('load', () => loadAvatarFromServer());
@@ -5961,7 +5961,7 @@
         }
       }
 
-      document.getElementById('phAvatar').textContent = (S.user.first || 'U')[0];
+      document.getElementById('phAvatar').textContent = (S.user.first || 'U')[0]; if (S.avatar && typeof applyAvatar === 'function') applyAvatar(S.avatar);
       document.getElementById('phName').textContent = S.user.name || S.user.first || 'User';
       document.getElementById('phSub').textContent = (S.user.city && S.user.job) ? S.user.job + ' · ' + S.user.city : 'Complete your profile';
       document.getElementById('piName').textContent = S.user.name || '—';
@@ -6994,7 +6994,7 @@ async function hubUpload(path, fd) {
 }
 function applyAvatar(key) {
   const em = ANIMALS[key]; if (!em) return;
-  ['phAvatar', 'pillAvatar'].forEach(id => { const el = hEl(id); if (el) el.textContent = em; });
+  ['phAvatar', 'pillAvatar'].forEach(id => { const el = hEl(id); if (el) { el.setAttribute('data-emoji', '1'); el.classList.remove('has-sil'); el.textContent = em; } });
 }
 async function loadAvatarFromServer() {
   const d = await apiFetch('profile/me');
@@ -7020,7 +7020,7 @@ async function loadHub() {
   h += hSec('🏁 21-day challenge', `<p>Status: <b>${pme.success && pme.data.user && pme.data.user.challenge_complete ? 'complete — eligible for matches' : 'in progress'}</b></p><div class="hub-row"><button class="btn-primary" onclick="showPage('challenge')">Open challenge &amp; movie journal</button></div>`);
   // Avatar
   const cur = pme.success && pme.data.user ? pme.data.user.avatar : null;
-  h += hSec('🐾 Animal avatar', `<div class="hub-row">${Object.keys(ANIMALS).map(k => `<span class="hub-av ${k === cur ? 'sel' : ''}" title="${k}" onclick="hubSetAvatar('${k}')">${ANIMALS[k]}</span>`).join('')}</div>`);
+  h += hSec('🐾 Animal avatar', `<div class="hub-row">${Object.keys(ANIMALS).map(k => `<span class="hub-av ${k === cur ? 'sel' : ''}" data-emoji="1" title="${k}" onclick="hubSetAvatar('${k}')">${ANIMALS[k]}</span>`).join('')}</div>`);
   // Verification
   const vs = ver.success ? ver.data.status : null;
   h += hSec('✅ Verification', ver.success ? `<div class="vsteps"><div class="vstep ${vs==='verified'?'ok':''}"><span>📸 Photo</span><em>${vs==='verified'?'✓ Verified':hE(vs||'Pending')}</em></div><div class="vstep ${ver.data.voice_verified?'ok':''}"><span>🎙️ Voice</span><em>${ver.data.voice_verified?'✓ Verified':'Not verified'}</em></div></div><div id="vMsg" class="vmsg"></div>
@@ -8524,6 +8524,9 @@ html[data-mode="light"] .nav-link{color:var(--tx-2)!important}
 html[data-mode="light"] .nav-link.active{background:var(--tx)!important;color:#fff!important}
 html[data-mode="light"] .btn-primary{color:#fff!important}
 html[data-mode="light"] #authBtns button:last-child{background:#16161D!important;color:#fff!important}
+html[data-mode="light"] #partnerBanner{background:#16161D!important;color:#F5F2EC!important;border-color:transparent!important}
+.ph-avatar::before{-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)!important;-webkit-mask-composite:xor!important;mask-composite:exclude!important;animation:none!important}
+.ph-avatar{box-shadow:0 0 0 4px var(--ink-0)!important}
 </style>
 <script id="afterglow-js">addEventListener("mousemove",function f(){document.body.classList.add("ag-mouse");removeEventListener("mousemove",f)},{passive:true});</script>
 <script id="back-nav">
